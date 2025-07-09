@@ -21,7 +21,7 @@ const SignupModal = ({ isOpen, onClose, onSignup, onSwitchToLogin }) => {
     }
 
     try {
-      const response = await fetch('https://c635b791-60c2-47ee-b59e-1cdc114c0dfd-00-3pwokcymuep0f.pike.replit.dev:5000/api/auth/register', {
+      const response = await fetch('https://to-do-advanced-production.up.railway.app/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
