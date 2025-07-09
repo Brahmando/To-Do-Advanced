@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import TaskInput from './components/TaskInput';
@@ -24,12 +23,13 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [pendingTask, setPendingTask] = useState(null);
+    const [isGroupTaskMode, setIsGroupTaskMode] = useState(false); // new state for group task mode
 
   // Check for saved user on component mount
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const guestMode = localStorage.getItem('guestMode');
-    
+
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     } else if (guestMode) {
@@ -61,7 +61,9 @@ function App() {
       return;
     }
 
-    if (isGuestMode) {
+    if (isGroupTaskMode) {
+      //handleGroupTaskAdd();
+    } else {
       const newTask = {
         _id: Date.now().toString(),
         text: input,
@@ -71,23 +73,27 @@ function App() {
         deleted: false
       };
 
-      const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = [...guestTasks, newTask];
-      saveGuestTasks(updatedTasks);
-      setTasks(prev => [...prev, newTask]);
-      setInput('');
-      setDate('');
-    } else {
-      createTask({ text: input, date })
-        .then(data => {
-          setInput('');
-          setDate('');
-          fetchTasks();
-        })
-        .catch(error => {
-          console.log('Error creating task:', error);
-        });
+      if (isGuestMode) {
+        const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
+        const updatedTasks = [...guestTasks, newTask];
+        saveGuestTasks(updatedTasks);
+        setTasks(prev => [...prev, newTask]);
+        setInput('');
+        setDate('');
+      } else {
+        createTask({ text: input, date })
+          .then(data => {
+            setInput('');
+            setDate('');
+            fetchTasks();
+          })
+          .catch(error => {
+            console.log('Error creating task:', error);
+          });
+      }
     }
+    setInput('');
+    setDate('');
   };
 
   const handleComplete = (id) => {
@@ -193,7 +199,7 @@ function App() {
     setIsGuestMode(false);
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestTasks');
-    
+
     if (pendingTask) {
       createTask(pendingTask)
         .then(() => {
@@ -217,7 +223,7 @@ function App() {
     setIsGuestMode(true);
     localStorage.setItem('guestMode', 'true');
     setShowLoginModal(false);
-    
+
     if (pendingTask) {
       const newTask = {
         _id: Date.now().toString(),
@@ -257,7 +263,7 @@ function App() {
         onSignupClick={() => setShowSignupModal(true)}
         onLogout={handleLogout}
       />
-      
+
       <div className="flex flex-col items-center py-10 px-2">
         <div className="w-full max-w-2xl bg-white/80 rounded-3xl shadow-2xl p-8 backdrop-blur-md border border-blue-100">
           <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400 mb-2 text-center drop-shadow-lg">
@@ -269,15 +275,15 @@ function App() {
           </p>
 
           <TaskInput input={input} setInput={setInput} date={date} setDate={setDate} handleAdd={handleAdd} />
-          
+
           {tasks.length > 0 && (
             <TaskList tasks={tasks} handleComplete={handleComplete} handleDelete={handleDelete} formatDate={formatDate} />
           )}
-          
+
           {completed.length > 0 && (
             <CompletedList completed={completed} handleDelete={handleDelete} handleUndo={handleUndo} formatDate={formatDate} />
           )}
-          
+
           {deleted.length > 0 && (
             <DeletedList deleted={deleted} formatDate={formatDate} />
           )}

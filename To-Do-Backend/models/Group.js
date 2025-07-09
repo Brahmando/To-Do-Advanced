@@ -1,12 +1,9 @@
+
 const mongoose = require('mongoose');
 
-const taskSchema = new mongoose.Schema({
-  text: {
+const groupSchema = new mongoose.Schema({
+  name: {
     type: String,
-    required: true
-  },
-  date: {
-    type: Date,
     required: true
   },
   user: {
@@ -14,15 +11,10 @@ const taskSchema = new mongoose.Schema({
     ref: 'User',
     default: null // null for guest users
   },
-  group: {
+  tasks: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group',
-    default: null // null for individual tasks
-  },
-  created: {
-    type: Date,
-    default: Date.now
-  },
+    ref: 'Task'
+  }],
   completed: {
     type: Boolean,
     default: false
@@ -36,9 +28,13 @@ const taskSchema = new mongoose.Schema({
   },
   deletedAt: {
     type: Date
+  },
+  created: {
+    type: Date,
+    default: Date.now
   }
 });
 
-const Task = mongoose.model('Task', taskSchema);
+const Group = mongoose.model('Group', groupSchema);
 
-module.exports = Task;
+module.exports = Group;
