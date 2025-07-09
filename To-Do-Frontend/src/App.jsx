@@ -7,6 +7,9 @@ import DeletedList from './components/DeletedList';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import { getTasks, createTask, completeTask, deleteTask, undoTask } from './services/taskService';
+import { getGroups, createGroup, completeGroup, deleteGroup } from './services/groupService';
+import GroupTaskModal from './components/GroupTaskModal';
+import GroupTaskList from './components/GroupTaskList';
 
 function formatDate(date) {
   return new Date(date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -23,7 +26,10 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [pendingTask, setPendingTask] = useState(null);
-    const [isGroupTaskMode, setIsGroupTaskMode] = useState(false); // new state for group task mode
+  const [isGroupTaskMode, setIsGroupTaskMode] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [groups, setGroups] = useState([]);
+  const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -49,20 +55,66 @@ function App() {
     localStorage.setItem('guestTasks', JSON.stringify(allTasks));
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!input.trim() || !date) {
       alert('Please enter a task and select a date.');
       return;
     }
 
+    if (isGroupTaskMode && !groupName.trim()) {
+      alert('Please enter a group name.');
+      return;
+    }
+
     if (!user && !isGuestMode) {
-      setPendingTask({ text: input, date });
+      setPendingTask({ text: input, date, groupName: isGroupTaskMode ? groupName : null });
       setShowLoginModal(true);
       return;
     }
 
     if (isGroupTaskMode) {
-      //handleGroupTaskAdd();
+      try {
+        if (isGuestMode) {
+          // Handle guest mode group tasks
+          const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+          let existingGroup = guestGroups.find(g => g.name === groupName);
+          
+          const newTask = {
+            _id: Date.now().toString(),
+            text: input,
+            date,
+            created: new Date().toISOString(),
+            completed: false,
+            deleted: false
+          };
+
+          if (existingGroup) {
+            existingGroup.tasks.push(newTask);
+          } else {
+            existingGroup = {
+              _id: Date.now().toString(),
+              name: groupName,
+              tasks: [newTask],
+              completed: false,
+              created: new Date().toISOString()
+            };
+            guestGroups.push(existingGroup);
+          }
+
+          localStorage.setItem('guestGroups', JSON.stringify(guestGroups));
+          setGroups(guestGroups);
+        } else {
+          await createGroup({ name: groupName, taskText: input, taskDate: date });
+          fetchGroups();
+        }
+        setInput('');
+        setDate('');
+        setGroupName('');
+        setIsGroupTaskMode(false);
+      } catch (error) {
+        console.error('Error creating group task:', error);
+        alert('Failed to create group task.');
+      }
     } else {
       const newTask = {
         _id: Date.now().toString(),
@@ -78,22 +130,17 @@ function App() {
         const updatedTasks = [...guestTasks, newTask];
         saveGuestTasks(updatedTasks);
         setTasks(prev => [...prev, newTask]);
-        setInput('');
-        setDate('');
       } else {
-        createTask({ text: input, date })
-          .then(data => {
-            setInput('');
-            setDate('');
-            fetchTasks();
-          })
-          .catch(error => {
-            console.log('Error creating task:', error);
-          });
+        try {
+          await createTask({ text: input, date });
+          fetchTasks();
+        } catch (error) {
+          console.log('Error creating task:', error);
+        }
       }
+      setInput('');
+      setDate('');
     }
-    setInput('');
-    setDate('');
   };
 
   const handleComplete = (id) => {
@@ -188,11 +235,113 @@ function App() {
     }
   };
 
+  const fetchGroups = () => {
+    if (user) {
+      getGroups()
+        .then(data => {
+          setGroups(data);
+        })
+        .catch(error => {
+          console.error('Error fetching groups:', error);
+        });
+    } else if (isGuestMode) {
+      const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+      setGroups(guestGroups);
+    }
+  };
+
+  const handleCompleteGroup = async (groupId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => 
+          group._id === groupId ? { ...group, completed: true } : group
+        );
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await completeGroup(groupId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error completing group:', error);
+      alert('Failed to complete group.');
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.filter(group => group._id !== groupId);
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await deleteGroup(groupId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      alert('Failed to delete group.');
+    }
+  };
+
+  const handleCompleteGroupTask = async (taskId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task => 
+            task._id === taskId 
+              ? { ...task, completed: true, completedAt: new Date().toISOString() }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await completeTask(taskId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error completing group task:', error);
+      alert('Failed to complete task.');
+    }
+  };
+
+  const handleDeleteGroupTask = async (taskId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task => 
+            task._id === taskId 
+              ? { ...task, deleted: true, deletedAt: new Date().toISOString() }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await deleteTask(taskId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error deleting group task:', error);
+      alert('Failed to delete task.');
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchTasks();
+      fetchGroups();
+    } else if (isGuestMode) {
+      fetchGroups();
     }
-  }, [user]);
+  }, [user, isGuestMode]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -249,19 +398,25 @@ function App() {
     setTasks([]);
     setCompleted([]);
     setDeleted([]);
+    setGroups([]);
+    setIsGroupTaskMode(false);
+    setGroupName('');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestTasks');
+    localStorage.removeItem('guestGroups');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
       <Navbar 
         user={user}
+        isGuestMode={isGuestMode}
         onLoginClick={() => setShowLoginModal(true)}
         onSignupClick={() => setShowSignupModal(true)}
         onLogout={handleLogout}
+        onGroupTaskClick={() => setShowGroupTaskModal(true)}
       />
 
       <div className="flex flex-col items-center py-10 px-2">
@@ -274,10 +429,31 @@ function App() {
             {isGuestMode && <span className="text-orange-500"> (Guest Mode)</span>}
           </p>
 
-          <TaskInput input={input} setInput={setInput} date={date} setDate={setDate} handleAdd={handleAdd} />
+          <TaskInput 
+            input={input} 
+            setInput={setInput} 
+            date={date} 
+            setDate={setDate} 
+            handleAdd={handleAdd}
+            isGroupTaskMode={isGroupTaskMode}
+            setIsGroupTaskMode={setIsGroupTaskMode}
+            groupName={groupName}
+            setGroupName={setGroupName}
+          />
 
           {tasks.length > 0 && (
             <TaskList tasks={tasks} handleComplete={handleComplete} handleDelete={handleDelete} formatDate={formatDate} />
+          )}
+
+          {groups.length > 0 && (
+            <GroupTaskList 
+              groups={groups}
+              handleCompleteTask={handleCompleteGroupTask}
+              handleDeleteTask={handleDeleteGroupTask}
+              formatDate={formatDate}
+              onCompleteGroup={handleCompleteGroup}
+              onDeleteGroup={handleDeleteGroup}
+            />
           )}
 
           {completed.length > 0 && (
@@ -311,6 +487,15 @@ function App() {
           setShowSignupModal(false);
           setShowLoginModal(true);
         }}
+      />
+
+      <GroupTaskModal
+        isOpen={showGroupTaskModal}
+        onClose={() => setShowGroupTaskModal(false)}
+        groups={groups}
+        formatDate={formatDate}
+        onCompleteGroup={handleCompleteGroup}
+        onDeleteGroup={handleDeleteGroup}
       />
     </div>
   );
