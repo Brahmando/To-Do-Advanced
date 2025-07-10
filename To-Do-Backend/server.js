@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config(); // Load environment variables from .env file
 const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
+const groupRoutes = require('./routes/groups');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ app.use(cors());
 // Routes
 app.use('/api/tasks', taskRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/groups', groupRoutes);
 
 // MongoDB Connection
 mongoose.connect(mongoUri)

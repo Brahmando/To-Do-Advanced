@@ -1,4 +1,3 @@
-
 const Task = require('../models/Task');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
@@ -39,21 +38,23 @@ exports.getTasks = async (req, res) => {
 // Create a new task
 exports.createTask = async (req, res) => {
   try {
-    const { text, date } = req.body;
+    const { text, date, groupId } = req.body;
     const user = await getUser(req);
 
     const task = new Task({
       text,
       date,
-      user: user ? user._id : null
+      user: user ? user._id : null,
+      group: groupId || null
     });
 
     const savedTask = await task.save();
 
-    // If user is logged in, add task to user's activeTasks array
-    if (user) {
-      await User.findByIdAndUpdate(user._id, {
-        $push: { activeTasks: savedTask._id }
+    // If task belongs to a group, add it to the group's tasks array
+    if (groupId) {
+      const Group = require('../models/Group');
+      await Group.findByIdAndUpdate(groupId, {
+        $push: { tasks: savedTask._id }
       });
     }
 

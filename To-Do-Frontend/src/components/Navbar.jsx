@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-const Navbar = ({ user, onLoginClick, onSignupClick, onLogout }) => {
+const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, isGuestMode }) => {
   return (
     <nav className="bg-gradient-to-r from-indigo-600 to-cyan-500 shadow-lg mb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -11,6 +11,14 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout }) => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {(user || isGuestMode) && (
+              <button
+                onClick={onGroupTaskClick}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition font-medium"
+              >
+                Group Tasks
+              </button>
+            )}
             {user ? (
               <>
                 <span className="text-white">Welcome, {user.name}!</span>
