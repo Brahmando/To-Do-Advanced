@@ -27,4 +27,4 @@ Make sure you have [Node.js](https://nodejs.org/en/download/) and [npm](https://
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Brahmando/To-Do-Advanced.git

@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api';
+const API_BASE_URL = 'https://to-do-advanced-production.up.railway.app/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
@@ -27,6 +27,7 @@ export const getGroups = async () => {
 };
 
 export const createGroup = async (group) => {
+  console.log('Creating group with data:', group);
   try {
     const response = await fetch(`${API_BASE_URL}/groups`, {
       method: 'POST',

@@ -56,6 +56,7 @@ function App() {
   };
 
   const handleAdd = async () => {
+    console.log('user-',user)
     if (!input.trim() || !date) {
       alert('Please enter a task and select a date.');
       return;
@@ -104,13 +105,14 @@ function App() {
           localStorage.setItem('guestGroups', JSON.stringify(guestGroups));
           setGroups(guestGroups);
         } else {
+          console.log('Creating group task:', { name: groupName, taskText: input, taskDate: date })
           await createGroup({ name: groupName, taskText: input, taskDate: date });
           fetchGroups();
         }
         setInput('');
         setDate('');
-        setGroupName('');
-        setIsGroupTaskMode(false);
+        // setGroupName('');
+        // setIsGroupTaskMode(false);
       } catch (error) {
         console.error('Error creating group task:', error);
         alert('Failed to create group task.');

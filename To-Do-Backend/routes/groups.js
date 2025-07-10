@@ -8,9 +8,10 @@ const router = express.Router();
 
 // Get all groups for user
 router.get('/', auth, async (req, res) => {
+  console.log('Received request to get groups for user:', req.user.userId);    
   try {
     const groups = await Group.find({ 
-      user: req.user?.id || null,
+      user: req.user?.userId || null,
       deleted: false 
     }).populate('tasks');
     res.json(groups);
@@ -21,18 +22,58 @@ router.get('/', auth, async (req, res) => {
 
 // Create a new group
 router.post('/', auth, async (req, res) => {
+  console.log('hello boss')
   try {
-    const { name } = req.body;
-    const group = new Group({
-      name,
-      user: req.user?.id || null
-    });
-    await group.save();
-    res.status(201).json(group);
+    const { name, taskText, taskDate } = req.body;
+    const user = req.user ? req.user.userId : null;
+
+    // Create the group
+    const existingGroup=await Group.findOne({name})
+    console.log('Existing group:', existingGroup)
+    if(existingGroup){
+      console.log('entering here')
+
+      const task = new Task({
+        text: taskText,
+        date: taskDate,
+        group: existingGroup._id  // Associate task with the new group
+      });
+
+      const savedTask = await task.save();
+      existingGroup.tasks.push(savedTask._id);
+      await existingGroup.save(); // Save the updated group
+      res.status(201).json({ group: existingGroup, task: savedTask });
+    }else{
+      console.log('Creating group with data:', { name, user, taskText, taskDate })
+      const group = new Group({ name, user });
+      const savedGroup = await group.save();  // Save the group to get its ID
+
+      // Create the task and associate it with the group if taskText is provided
+      if (taskText && taskDate) {
+        const task = new Task({
+          text: taskText,
+          date: taskDate,
+          group: savedGroup._id  // Associate task with the new group
+        });
+
+        const savedTask = await task.save();
+
+        // Now update the group's tasks array to include the new task ID
+        savedGroup.tasks.push(savedTask._id); // Push the new task ID into the group's tasks array
+        await savedGroup.save(); // Save the updated group
+
+        res.status(201).json({ group: savedGroup, task: savedTask });
+      } else {
+        res.status(201).json({ group: savedGroup });
+      }
+    }
+
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Complete a group (mark all tasks as completed)
 router.put('/:id/complete', auth, async (req, res) => {
