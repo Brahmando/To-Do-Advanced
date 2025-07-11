@@ -10,6 +10,7 @@ import { getTasks, createTask, completeTask, deleteTask, undoTask } from './serv
 import { getGroups, createGroup, completeGroup, deleteGroup } from './services/groupService';
 import GroupTaskModal from './components/GroupTaskModal';
 import GroupTaskList from './components/GroupTaskList';
+import SharedGroupsPage from './components/SharedGroupsPage';
 
 function formatDate(date) {
   return new Date(date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -30,6 +31,7 @@ function App() {
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups] = useState([]);
   const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
+  const [showSharedGroupsPage, setShowSharedGroupsPage] = useState(false);
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -419,6 +421,7 @@ function App() {
         onSignupClick={() => setShowSignupModal(true)}
         onLogout={handleLogout}
         onGroupTaskClick={() => setShowGroupTaskModal(true)}
+        onSharedGroupClick={() => setShowSharedGroupsPage(true)}
       />
 
       <div className="flex flex-col items-center py-10 px-2">
@@ -499,6 +502,13 @@ function App() {
         onCompleteGroup={handleCompleteGroup}
         onDeleteGroup={handleDeleteGroup}
       />
+
+      {showSharedGroupsPage && (
+        <SharedGroupsPage
+          user={user}
+          onClose={() => setShowSharedGroupsPage(false)}
+        />
+      )}
     </div>
   );
 }
