@@ -1,23 +1,40 @@
 
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import NotificationBell from './NotificationBell';
 
-const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, onSharedGroupClick, isGuestMode }) => {
+const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, isGuestMode, notifications, setNotifications }) => {
+  const location = useLocation();
+
   return (
     <nav className="bg-gradient-to-r from-indigo-600 to-cyan-500 shadow-lg mb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <h1 className="text-white text-xl font-bold">To-Do App</h1>
+            <Link to="/" className="text-white text-xl font-bold hover:text-gray-200">
+              To-Do App
+            </Link>
           </div>
           
           <div className="flex items-center space-x-4">
             {user && (
-              <button
-                onClick={onSharedGroupClick}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition font-medium"
-              >
-                Shared Groups
-              </button>
+              <>
+                <Link
+                  to="/shared-groups"
+                  className={`px-4 py-2 rounded-lg transition font-medium ${
+                    location.pathname.startsWith('/shared-group') 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                  }`}
+                >
+                  Shared Groups
+                </Link>
+                <NotificationBell 
+                  notifications={notifications} 
+                  setNotifications={setNotifications}
+                  user={user}
+                />
+              </>
             )}
             {(user || isGuestMode) && (
               <button

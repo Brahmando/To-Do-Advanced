@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { joinSharedGroup } from '../services/sharedGroupService';
 
 const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
@@ -101,12 +102,12 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
           </button>
         )}
         {userRole !== 'none' && (
-          <button
-            onClick={() => window.open(`/shared-group/${group._id}`, '_blank')}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm"
+          <Link
+            to={`/shared-group/${group._id}`}
+            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm text-center"
           >
             Open Group
-          </button>
+          </Link>
         )}
       </div>
 
