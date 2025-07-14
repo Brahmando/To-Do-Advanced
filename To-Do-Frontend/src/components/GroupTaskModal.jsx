@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { createSharedGroup, createSharedGroupFromExisting } from '../services/sharedGroupService';
 import GroupTaskList from './GroupTaskList';
 
-const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, onDeleteGroup }) => {
+const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, onDeleteGroup, handleCompleteGroupTask, handleDeleteGroupTask, handleUndoGroupTask, handleEditGroupTask }) => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [shareData, setShareData] = useState({
@@ -16,7 +15,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
 
   const handleShareGroup = async () => {
     if (!selectedGroup) return;
-    
+
     if (!shareData.isPublic && !shareData.accessKey.trim()) {
       alert('Please provide an access key for private groups.');
       return;
@@ -29,7 +28,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
         isPublic: shareData.isPublic,
         accessKey: shareData.isPublic ? undefined : shareData.accessKey
       });
-      
+
       setShowShareModal(false);
       setSelectedGroup(null);
       setShareData({ isPublic: false, accessKey: '', description: '' });
@@ -73,14 +72,13 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
           ) : (
             <GroupTaskList 
               groups={groups}
-              handleCompleteTask={() => {}}
-              handleDeleteTask={() => {}}
+              handleCompleteTask={handleCompleteGroupTask}
+              handleDeleteTask={handleDeleteGroupTask}
               formatDate={formatDate}
               onCompleteGroup={onCompleteGroup}
               onDeleteGroup={onDeleteGroup}
-              handleUndoTask={()=>{}}
-
-              handleEditTask={() => {}}
+              handleUndoTask={handleUndoGroupTask}
+              handleEditTask={handleEditGroupTask}
               showShareButton={true}
               onShareGroup={openShareModal}
             />
@@ -94,7 +92,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
               <h3 className="text-lg font-semibold mb-4">
                 Share "{selectedGroup?.name}"
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

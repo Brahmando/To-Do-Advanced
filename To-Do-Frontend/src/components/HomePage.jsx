@@ -5,7 +5,6 @@ import TaskList from './TaskList';
 import CompletedList from './CompletedList';
 import DeletedList from './DeletedList';
 import GroupTaskList from './GroupTaskList';
-import SearchBar from './SearchBar';
 
 const HomePage = ({
   tasks,
@@ -42,10 +41,6 @@ const HomePage = ({
           {isGuestMode && <span className="text-orange-500"> (Guest Mode)</span>}
         </p>
 
-        {!isGuestMode && (
-          <SearchBar user={!isGuestMode ? { id: 'user' } : null} isGuestMode={isGuestMode} />
-        )}
-
         <TaskInput 
           input={input} 
           setInput={setInput} 
@@ -67,9 +62,12 @@ const HomePage = ({
             groups={groups}
             handleCompleteTask={handleCompleteGroupTask}
             handleDeleteTask={handleDeleteGroupTask}
+            handleUndoTask={handleUndoGroupTask}
+            handleEditTask={handleEditGroupTask}
             formatDate={formatDate}
             onCompleteGroup={handleCompleteGroup}
             onDeleteGroup={handleDeleteGroup}
+            showShareButton={false}
           />
         )}
 

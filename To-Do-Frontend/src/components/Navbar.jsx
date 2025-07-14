@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
@@ -15,7 +14,7 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
               To-Do App
             </Link>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {user && (
               <Link
@@ -30,21 +29,19 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
               </Link>
             )}
             {(user || isGuestMode) && (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={onGroupTaskClick}
-                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition font-medium"
-                >
-                  Group Tasks
-                </button>
-                {user && (
-                  <NotificationBell 
-                    notifications={notifications} 
-                    setNotifications={setNotifications}
-                    user={user}
-                  />
-                )}
-              </div>
+              <button
+                onClick={onGroupTaskClick}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition font-medium"
+              >
+                Group Tasks
+              </button>
+            )}
+            {user && (
+              <NotificationBell 
+                notifications={notifications} 
+                setNotifications={setNotifications}
+                user={user}
+              />
             )}
             {user ? (
               <>
@@ -74,6 +71,12 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
             )}
           </div>
         </div>
+        {/* Search Bar Row */}
+        {user && (
+          <div className="pb-4">
+            <SearchBar user={user} isGuestMode={isGuestMode} />
+          </div>
+        )}
       </div>
     </nav>
   );

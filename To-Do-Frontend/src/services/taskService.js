@@ -101,3 +101,40 @@ export const undoTask = async (id) => {
     throw error;
   }
 };
+
+export const handleUndoGroupTask = async (taskId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/undo`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error undoing group task:', error);
+    throw error;
+  }
+};
+
+export const handleEditTask = async (taskId, text, date) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ text, date }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error editing task:', error);
+    throw error;
+  }
+};

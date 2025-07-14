@@ -538,6 +538,10 @@ function App() {
           formatDate={formatDate}
           onCompleteGroup={handleCompleteGroup}
           onDeleteGroup={handleDeleteGroup}
+          handleUndoGroupTask={handleUndoGroupTask}
+          handleEditGroupTask={handleEditGroupTask}
+          handleCompleteGroupTask={handleCompleteGroupTask}
+          handleDeleteGroupTask={handleDeleteGroupTask}
         />
       </div>
     </Router>
