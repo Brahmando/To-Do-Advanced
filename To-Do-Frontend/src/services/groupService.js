@@ -81,3 +81,21 @@ export const deleteGroup = async (id) => {
     throw error;
   }
 };
+
+export const handleUndoGroupTask = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/groups/${id}/undo`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error undoing group task:', error);
+    throw error;
+  }
+};

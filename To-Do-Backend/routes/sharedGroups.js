@@ -40,6 +40,65 @@ router.get('/search', auth, async (req, res) => {
   }
 });
 
+// Add this route for user notifications
+router.get('/user-notifications', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get all shared groups where user is a member
+    const userGroups = await SharedGroup.find({
+      'members.user': userId
+    }).populate('members.user', 'name');
+
+    const notifications = [];
+
+    for (const group of userGroups) {
+      // Check for pending join requests if user is owner
+      const userMember = group.members.find(m => m.user._id.toString() === userId);
+      if (userMember && userMember.role === 'owner' && group.joinRequests) {
+        for (const request of group.joinRequests) {
+          if (request.status === 'pending') {
+            notifications.push({
+              type: 'join_request',
+              groupId: group._id,
+              groupName: group.name,
+              requestId: request._id,
+              userId: request.user,
+              userName: request.userName,
+              requestedRole: request.requestedRole,
+              message: request.message,
+              createdAt: request.createdAt
+            });
+          }
+        }
+      }
+
+      // Check for request status updates if user made requests
+      if (group.joinRequests) {
+        for (const request of group.joinRequests) {
+          if (request.user.toString() === userId && request.status !== 'pending') {
+            notifications.push({
+              type: 'request_update',
+              groupId: group._id,
+              groupName: group.name,
+              status: request.status,
+              createdAt: request.updatedAt || request.createdAt
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by most recent
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(notifications);
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get specific shared group
 router.get('/:id', auth, async (req, res) => {
   try {
@@ -585,61 +644,4 @@ router.post('/from-group/:groupId', auth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Add this route for user notifications
-router.get('/user-notifications', auth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    
-    // Get all shared groups where user is a member
-    const userGroups = await SharedGroup.find({
-      'members.user': userId
-    }).populate('members.user', 'name');
 
-    const notifications = [];
-
-    for (const group of userGroups) {
-      // Check for pending join requests if user is owner
-      const userMember = group.members.find(m => m.user._id.toString() === userId);
-      if (userMember && userMember.role === 'owner' && group.joinRequests) {
-        for (const request of group.joinRequests) {
-          if (request.status === 'pending') {
-            notifications.push({
-              type: 'join_request',
-              groupId: group._id,
-              groupName: group.name,
-              requestId: request._id,
-              userId: request.user,
-              userName: request.userName,
-              requestedRole: request.requestedRole,
-              message: request.message,
-              createdAt: request.createdAt
-            });
-          }
-        }
-      }
-
-      // Check for request status updates if user made requests
-      if (group.joinRequests) {
-        for (const request of group.joinRequests) {
-          if (request.user.toString() === userId && request.status !== 'pending') {
-            notifications.push({
-              type: 'request_update',
-              groupId: group._id,
-              groupName: group.name,
-              status: request.status,
-              createdAt: request.updatedAt || request.createdAt
-            });
-          }
-        }
-      }
-    }
-
-    // Sort by most recent
-    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json(notifications);
-  } catch (error) {
-    console.error('Error fetching user notifications:', error);
-    res.status(500).json({ error: error.message });
-  }
-});

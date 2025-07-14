@@ -74,7 +74,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-
 // Complete a group (mark all tasks as completed)
 router.put('/:id/complete', auth, async (req, res) => {
   try {
@@ -91,6 +90,24 @@ router.put('/:id/complete', auth, async (req, res) => {
 
     group.completed = true;
     group.completedAt = new Date();
+    await group.save();
+
+    res.json(group);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Undo complete a group
+router.put('/:id/undo', auth, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    group.completed = false;
+    group.completedAt = null;
     await group.save();
 
     res.json(group);

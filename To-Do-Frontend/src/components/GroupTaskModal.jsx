@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { createSharedGroup, createSharedGroupFromExisting } from '../services/sharedGroupService';
+import GroupTaskList from './GroupTaskList';
 
 const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, onDeleteGroup }) => {
   const [showShareModal, setShowShareModal] = useState(false);
@@ -77,12 +78,12 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
               formatDate={formatDate}
               onCompleteGroup={onCompleteGroup}
               onDeleteGroup={onDeleteGroup}
-              handleUndoTask={() => {}}
+              handleUndoTask={()=>{}}
+
               handleEditTask={() => {}}
               showShareButton={true}
               onShareGroup={openShareModal}
             />
-            </div>
           )}
         </div>
 

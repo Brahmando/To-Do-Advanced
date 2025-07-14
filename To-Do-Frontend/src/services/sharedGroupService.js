@@ -232,7 +232,7 @@ export const reorderTasksInSharedGroup = async (groupId, taskIds, commitMessage)
 
 export const getNotifications = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/shared-groups/notifications`, {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/user-notifications`, {
       headers: getHeaders()
     });
 
