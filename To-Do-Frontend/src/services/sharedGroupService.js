@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api';
 
 const getHeaders = () => {
@@ -14,11 +13,11 @@ export const getSharedGroups = async () => {
     const response = await fetch(`${API_BASE_URL}/shared-groups`, {
       headers: getHeaders()
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching shared groups:', error);
@@ -31,11 +30,11 @@ export const searchPublicGroups = async (query) => {
     const response = await fetch(`${API_BASE_URL}/shared-groups/search?query=${encodeURIComponent(query)}`, {
       headers: getHeaders()
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error searching groups:', error);
@@ -48,11 +47,11 @@ export const getSharedGroup = async (id) => {
     const response = await fetch(`${API_BASE_URL}/shared-groups/${id}`, {
       headers: getHeaders()
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching shared group:', error);
@@ -65,16 +64,35 @@ export const createSharedGroup = async (groupData) => {
     const response = await fetch(`${API_BASE_URL}/shared-groups`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(groupData)
+      body: JSON.stringify(groupData),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error creating shared group:', error);
+    throw error;
+  }
+};
+
+export const createSharedGroupFromExisting = async (groupId, shareData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/from-group/${groupId}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(shareData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating shared group from existing:', error);
     throw error;
   }
 };
@@ -86,11 +104,11 @@ export const joinSharedGroup = async (groupId, joinData) => {
       headers: getHeaders(),
       body: JSON.stringify(joinData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error joining shared group:', error);
@@ -105,11 +123,11 @@ export const handleJoinRequest = async (groupId, requestId, action) => {
       headers: getHeaders(),
       body: JSON.stringify({ action })
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error handling join request:', error);
@@ -124,11 +142,11 @@ export const addTaskToSharedGroup = async (groupId, taskData) => {
       headers: getHeaders(),
       body: JSON.stringify(taskData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error adding task to shared group:', error);
@@ -143,11 +161,11 @@ export const updateTaskInSharedGroup = async (groupId, taskId, taskData) => {
       headers: getHeaders(),
       body: JSON.stringify(taskData)
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error updating task in shared group:', error);
@@ -162,11 +180,11 @@ export const completeTaskInSharedGroup = async (groupId, taskId, commitMessage) 
       headers: getHeaders(),
       body: JSON.stringify({ commitMessage })
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error completing task in shared group:', error);
@@ -181,11 +199,11 @@ export const deleteTaskFromSharedGroup = async (groupId, taskId, commitMessage) 
       headers: getHeaders(),
       body: JSON.stringify({ commitMessage })
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error deleting task from shared group:', error);
@@ -200,11 +218,11 @@ export const reorderTasksInSharedGroup = async (groupId, taskIds, commitMessage)
       headers: getHeaders(),
       body: JSON.stringify({ taskIds, commitMessage })
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error reordering tasks in shared group:', error);
@@ -214,17 +232,52 @@ export const reorderTasksInSharedGroup = async (groupId, taskIds, commitMessage)
 
 export const getNotifications = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/shared-groups/notifications/requests`, {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/notifications`, {
       headers: getHeaders()
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching notifications:', error);
+    throw error;
+  }
+};
+
+export const getUserNotifications = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/user-notifications`, {
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/notifications/${notificationId}/read`, {
+      method: 'PUT',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
     throw error;
   }
 };

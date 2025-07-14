@@ -18,31 +18,33 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
           
           <div className="flex items-center space-x-4">
             {user && (
-              <>
-                <Link
-                  to="/shared-groups"
-                  className={`px-4 py-2 rounded-lg transition font-medium ${
-                    location.pathname.startsWith('/shared-group') 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-green-500 hover:bg-green-600 text-white'
-                  }`}
-                >
-                  Shared Groups
-                </Link>
-                <NotificationBell 
-                  notifications={notifications} 
-                  setNotifications={setNotifications}
-                  user={user}
-                />
-              </>
+              <Link
+                to="/shared-groups"
+                className={`px-4 py-2 rounded-lg transition font-medium ${
+                  location.pathname.startsWith('/shared-group') 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-green-500 hover:bg-green-600 text-white'
+                }`}
+              >
+                Shared Groups
+              </Link>
             )}
             {(user || isGuestMode) && (
-              <button
-                onClick={onGroupTaskClick}
-                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition font-medium"
-              >
-                Group Tasks
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={onGroupTaskClick}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition font-medium"
+                >
+                  Group Tasks
+                </button>
+                {user && (
+                  <NotificationBell 
+                    notifications={notifications} 
+                    setNotifications={setNotifications}
+                    user={user}
+                  />
+                )}
+              </div>
             )}
             {user ? (
               <>

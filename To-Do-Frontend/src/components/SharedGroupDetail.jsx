@@ -1,7 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   getSharedGroup, 
   addTaskToSharedGroup, 
@@ -18,6 +35,7 @@ const SharedGroupDetail = ({ user }) => {
   const [showAddTask, setShowAddTask] = useState(false);
   const [showChangeLog, setShowChangeLog] = useState(false);
   const [showCommitModal, setShowCommitModal] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
   const [commitAction, setCommitAction] = useState(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [newTask, setNewTask] = useState({ text: '', date: '' });
@@ -142,18 +160,104 @@ const SharedGroupDetail = ({ user }) => {
     );
   };
 
-  const handleDragEnd = (result) => {
-    if (!result.destination || !canEdit()) return;
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    const items = Array.from(group.tasks.filter(task => !task.deleted && !task.completed));
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
 
-    const taskIds = items.map(task => task._id);
+    if (!over || !canEdit()) return;
 
-    executeWithCommit(
-      (message) => reorderTasksInSharedGroup(id, taskIds, message),
-      'Reordered tasks'
+    if (active.id !== over.id) {
+      const items = Array.from(group.tasks.filter(task => !task.deleted && !task.completed));
+      const oldIndex = items.findIndex(item => item._id === active.id);
+      const newIndex = items.findIndex(item => item._id === over.id);
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      const taskIds = newItems.map(task => task._id);
+
+      executeWithCommit(
+        (message) => reorderTasksInSharedGroup(id, taskIds, message),
+        'Reordered tasks'
+      );
+    }
+  };
+
+  const SortableTask = ({ task, index }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: task._id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`bg-gray-50 rounded-lg p-4 mb-3 ${isDragging ? 'shadow-lg' : ''}`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 flex-1">
+            {canEdit() && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="text-gray-400 hover:text-gray-600 cursor-grab"
+              >
+                ⋮⋮
+              </div>
+            )}
+            <div className="flex-1">
+              <p className="font-medium text-gray-800">{task.text}</p>
+              <p className="text-sm text-gray-500">
+                Due: {formatDate(task.date)}
+              </p>
+              <p className="text-xs text-gray-400">
+                Created by {task.createdByName}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {canEdit() && (
+              <button
+                onClick={() => handleCompleteTask(task)}
+                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+              >
+                Complete
+              </button>
+            )}
+            {canEditTask(task) && (
+              <button
+                onClick={() => handleEditTask(task)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+              >
+                Edit
+              </button>
+            )}
+            {canDelete() && (
+              <button
+                onClick={() => handleDeleteTask(task)}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -236,7 +340,12 @@ const SharedGroupDetail = ({ user }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6 text-sm text-gray-600">
               <span>Owner: {group.ownerName}</span>
-              <span>Members: {group.members.length}</span>
+              <button 
+                onClick={() => setShowMembersModal(true)}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Members: {group.members.length}
+              </button>
               <span>Active: {activeTasks.length}</span>
               <span>Completed: {completedTasks.length}</span>
             </div>
@@ -265,81 +374,20 @@ const SharedGroupDetail = ({ user }) => {
           {activeTasks.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4">Active Tasks</h2>
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="tasks">
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {activeTasks.map((task, index) => (
-                        <Draggable
-                          key={task._id}
-                          draggableId={task._id}
-                          index={index}
-                          isDragDisabled={!canEdit()}
-                        >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`bg-gray-50 rounded-lg p-4 mb-3 ${
-                                snapshot.isDragging ? 'shadow-lg' : ''
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3 flex-1">
-                                  {canEdit() && (
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="text-gray-400 hover:text-gray-600 cursor-grab"
-                                    >
-                                      ⋮⋮
-                                    </div>
-                                  )}
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-800">{task.text}</p>
-                                    <p className="text-sm text-gray-500">
-                                      Due: {formatDate(task.date)}
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                      Created by {task.createdByName}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  {canEdit() && (
-                                    <button
-                                      onClick={() => handleCompleteTask(task)}
-                                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
-                                    >
-                                      Complete
-                                    </button>
-                                  )}
-                                  {canEditTask(task) && (
-                                    <button
-                                      onClick={() => handleEditTask(task)}
-                                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                                    >
-                                      Edit
-                                    </button>
-                                  )}
-                                  {canDelete() && (
-                                    <button
-                                      onClick={() => handleDeleteTask(task)}
-                                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                                    >
-                                      Delete
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext 
+                  items={activeTasks.map(task => task._id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {activeTasks.map((task, index) => (
+                    <SortableTask key={task._id} task={task} index={index} />
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
           )}
 
@@ -361,6 +409,31 @@ const SharedGroupDetail = ({ user }) => {
                         </p>
                       </div>
                       <span className="text-green-600">✓</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Deleted Tasks */}
+          {group.tasks.filter(task => task.deleted).length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">Deleted Tasks</h2>
+              <div className="space-y-3">
+                {group.tasks.filter(task => task.deleted).map(task => (
+                  <div key={task._id} className="bg-red-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-800 line-through">{task.text}</p>
+                        <p className="text-sm text-gray-500">
+                          Deleted: {formatDate(task.deletedAt)}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Created by {task.createdByName}
+                        </p>
+                      </div>
+                      <span className="text-red-600">🗑️</span>
                     </div>
                   </div>
                 ))}
@@ -524,6 +597,54 @@ const SharedGroupDetail = ({ user }) => {
                 ) : (
                   <p className="text-gray-500 text-center py-4">No changes yet.</p>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Members Modal */}
+        {showMembersModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Group Members</h3>
+                <button
+                  onClick={() => setShowMembersModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-3">
+                {group.members && group.members.map((member, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{member.userName}</p>
+                      <span className={`text-xs px-2 py-1 rounded-full ${getRoleColor(member.role)}`}>
+                        {member.role}
+                      </span>
+                    </div>
+                    {userRole === 'owner' && member.role !== 'owner' && (
+                      <div className="flex space-x-1">
+                        <select
+                          value={member.role}
+                          onChange={(e) => handleRoleChange(member.user, e.target.value)}
+                          className="text-xs border rounded px-2 py-1"
+                        >
+                          <option value="observer">Observer</option>
+                          <option value="medium">Medium</option>
+                          <option value="collaborator">Collaborator</option>
+                        </select>
+                        <button
+                          onClick={() => handleRemoveMember(member.user)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

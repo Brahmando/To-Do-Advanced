@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -104,7 +103,7 @@ function App() {
         if (isGuestMode) {
           const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
           let existingGroup = guestGroups.find(g => g.name === groupName);
-          
+
           const newTask = {
             _id: Date.now().toString(),
             text: input,
@@ -355,6 +354,36 @@ function App() {
     }
   };
 
+  const handleUndoGroupTask = async (taskId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task =>
+            task._id === taskId
+              ? { ...task, completed: false, completedAt: null }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await undoTask(taskId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error undoing group task:', error);
+      alert('Failed to undo task.');
+    }
+  };
+
+  const handleEditGroupTask = async (taskId, newText, newDate) => {
+    // Placeholder for edit functionality, implementation needed
+    console.log(`Editing task ${taskId} with new text: ${newText} and new date: ${newDate}`);
+    alert('Edit functionality is not yet implemented.');
+  };
+
   useEffect(() => {
     if (user) {
       fetchTasks();
@@ -465,6 +494,8 @@ function App() {
               groups={groups}
               handleCompleteGroupTask={handleCompleteGroupTask}
               handleDeleteGroupTask={handleDeleteGroupTask}
+              handleUndoGroupTask={handleUndoGroupTask}
+              handleEditGroupTask={handleEditGroupTask}
               handleCompleteGroup={handleCompleteGroup}
               handleDeleteGroup={handleDeleteGroup}
               formatDate={formatDate}

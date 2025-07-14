@@ -509,3 +509,137 @@ router.get('/notifications/requests', auth, async (req, res) => {
 });
 
 module.exports = router;
+// Add this route after the existing POST route
+router.post('/from-group/:groupId', auth, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { name, description, isPublic, accessKey } = req.body;
+    const userId = req.user.userId;
+
+    // Get the original group
+    const originalGroup = await Group.findById(groupId).populate('tasks');
+    if (!originalGroup || originalGroup.user.toString() !== userId) {
+      return res.status(404).json({ error: 'Group not found or access denied' });
+    }
+
+    // Check if shared group name already exists
+    const existingSharedGroup = await SharedGroup.findOne({ name });
+    if (existingSharedGroup) {
+      return res.status(400).json({ error: 'Shared group name already exists' });
+    }
+
+    // Create the shared group
+    const sharedGroup = new SharedGroup({
+      name,
+      description,
+      owner: userId,
+      isPublic,
+      accessKey: isPublic ? undefined : accessKey,
+      members: [{
+        user: userId,
+        role: 'owner',
+        joinedAt: new Date()
+      }],
+      tasks: [],
+      changeLog: [{
+        action: 'GROUP_CREATED',
+        user: userId,
+        userName: req.user.name,
+        commitMessage: `Created shared group from existing group: ${originalGroup.name}`,
+        timestamp: new Date()
+      }]
+    });
+
+    const savedSharedGroup = await sharedGroup.save();
+
+    // Copy tasks from original group
+    for (const originalTask of originalGroup.tasks) {
+      if (!originalTask.deleted) {
+        const newTask = new Task({
+          text: originalTask.text,
+          date: originalTask.date,
+          group: savedSharedGroup._id,
+          completed: originalTask.completed,
+          completedAt: originalTask.completedAt,
+          createdBy: userId,
+          createdByName: req.user.name,
+          created: originalTask.created || new Date()
+        });
+
+        const savedTask = await newTask.save();
+        savedSharedGroup.tasks.push(savedTask._id);
+      }
+    }
+
+    await savedSharedGroup.save();
+
+    // Populate the response
+    const populatedGroup = await SharedGroup.findById(savedSharedGroup._id)
+      .populate('tasks')
+      .populate('owner', 'name')
+      .populate('members.user', 'name');
+
+    res.status(201).json(populatedGroup);
+  } catch (error) {
+    console.error('Error creating shared group from existing:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// Add this route for user notifications
+router.get('/user-notifications', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Get all shared groups where user is a member
+    const userGroups = await SharedGroup.find({
+      'members.user': userId
+    }).populate('members.user', 'name');
+
+    const notifications = [];
+
+    for (const group of userGroups) {
+      // Check for pending join requests if user is owner
+      const userMember = group.members.find(m => m.user._id.toString() === userId);
+      if (userMember && userMember.role === 'owner' && group.joinRequests) {
+        for (const request of group.joinRequests) {
+          if (request.status === 'pending') {
+            notifications.push({
+              type: 'join_request',
+              groupId: group._id,
+              groupName: group.name,
+              requestId: request._id,
+              userId: request.user,
+              userName: request.userName,
+              requestedRole: request.requestedRole,
+              message: request.message,
+              createdAt: request.createdAt
+            });
+          }
+        }
+      }
+
+      // Check for request status updates if user made requests
+      if (group.joinRequests) {
+        for (const request of group.joinRequests) {
+          if (request.user.toString() === userId && request.status !== 'pending') {
+            notifications.push({
+              type: 'request_update',
+              groupId: group._id,
+              groupName: group.name,
+              status: request.status,
+              createdAt: request.updatedAt || request.createdAt
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by most recent
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(notifications);
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

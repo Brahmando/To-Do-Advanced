@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { createSharedGroup } from '../services/sharedGroupService';
+import { createSharedGroup, createSharedGroupFromExisting } from '../services/sharedGroupService';
 
 const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, onDeleteGroup }) => {
   const [showShareModal, setShowShareModal] = useState(false);
@@ -22,7 +22,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
     }
 
     try {
-      await createSharedGroup({
+      await createSharedGroupFromExisting(selectedGroup._id, {
         name: selectedGroup.name,
         description: shareData.description,
         isPublic: shareData.isPublic,
@@ -32,7 +32,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
       setShowShareModal(false);
       setSelectedGroup(null);
       setShareData({ isPublic: false, accessKey: '', description: '' });
-      alert('Group converted to shared group successfully!');
+      alert('Group converted to shared group successfully with all tasks!');
     } catch (error) {
       console.error('Error sharing group:', error);
       alert('Failed to share group. Group name might already exist.');
@@ -70,78 +70,18 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
               No group tasks yet. Create your first group task!
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {groups.map(group => {
-                const activeTasks = group.tasks?.filter(task => !task.completed && !task.deleted) || [];
-                const completedTasks = group.tasks?.filter(task => task.completed && !task.deleted) || [];
-                const allCompleted = activeTasks.length === 0 && completedTasks.length > 0;
-
-                return (
-                  <div key={group._id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-lg text-gray-800">{group.name}</h3>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openShareModal(group)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Share
-                        </button>
-                        {allCompleted && !group.completed && (
-                          <button
-                            onClick={() => onCompleteGroup(group._id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Complete Group
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onDeleteGroup(group._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 mb-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Active Tasks:</span>
-                        <span>{activeTasks.length}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Completed:</span>
-                        <span>{completedTasks.length}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Created:</span>
-                        <span>{formatDate(group.created)}</span>
-                      </div>
-                    </div>
-
-                    {group.completed && (
-                      <div className="bg-green-100 text-green-800 p-2 rounded text-sm text-center font-medium">
-                        ✓ Group Completed
-                      </div>
-                    )}
-
-                    <div className="mt-3 space-y-2 max-h-32 overflow-y-auto">
-                      {activeTasks.map(task => (
-                        <div key={task._id} className="bg-white p-2 rounded border">
-                          <p className="text-sm font-medium">{task.text}</p>
-                          <p className="text-xs text-gray-500">Due: {formatDate(task.date)}</p>
-                        </div>
-                      ))}
-                      {completedTasks.map(task => (
-                        <div key={task._id} className="bg-green-50 p-2 rounded border border-green-200">
-                          <p className="text-sm font-medium text-green-800 line-through">{task.text}</p>
-                          <p className="text-xs text-green-600">Completed: {formatDate(task.completedAt)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <GroupTaskList 
+              groups={groups}
+              handleCompleteTask={() => {}}
+              handleDeleteTask={() => {}}
+              formatDate={formatDate}
+              onCompleteGroup={onCompleteGroup}
+              onDeleteGroup={onDeleteGroup}
+              handleUndoTask={() => {}}
+              handleEditTask={() => {}}
+              showShareButton={true}
+              onShareGroup={openShareModal}
+            />
             </div>
           )}
         </div>
