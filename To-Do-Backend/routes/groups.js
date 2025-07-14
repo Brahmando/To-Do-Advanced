@@ -98,24 +98,6 @@ router.put('/:id/complete', auth, async (req, res) => {
   }
 });
 
-// Undo complete a group
-router.put('/:id/undo', auth, async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.id);
-    if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
-    }
-
-    group.completed = false;
-    group.completedAt = null;
-    await group.save();
-
-    res.json(group);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Delete a group
 router.delete('/:id', auth, async (req, res) => {
   try {
