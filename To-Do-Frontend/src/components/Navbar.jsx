@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import SearchBar from './SearchBar';
 import SearchBar from './SearchBar'; // Import the SearchBar component
 
 const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, isGuestMode, notifications, setNotifications }) => {

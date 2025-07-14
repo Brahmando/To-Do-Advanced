@@ -1,4 +1,3 @@
-
 import React from 'react';
 import TaskInput from './TaskInput';
 import TaskList from './TaskList';
@@ -65,7 +64,7 @@ const HomePage = ({
             handleCompleteTask={handleCompleteGroupTask}
             handleDeleteTask={handleDeleteGroupTask}
             handleUndoTask={handleUndoGroupTask}
-            
+            handleEditTask={handleEditGroupTask}
             formatDate={formatDate}
             onCompleteGroup={handleCompleteGroup}
             onDeleteGroup={handleDeleteGroup}

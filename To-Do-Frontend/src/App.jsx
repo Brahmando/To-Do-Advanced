@@ -379,9 +379,28 @@ function App() {
   };
 
   const handleEditGroupTask = async (taskId, newText, newDate) => {
-    // Placeholder for edit functionality, implementation needed
-    console.log(`Editing task ${taskId} with new text: ${newText} and new date: ${newDate}`);
-    alert('Edit functionality is not yet implemented.');
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task =>
+            task._id === taskId
+              ? { ...task, text: newText, date: newDate }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        const { editTask } = await import('./services/taskService');
+        await editTask(taskId, { text: newText, date: newDate });
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error editing group task:', error);
+      alert('Failed to edit task.');
+    }
   };
 
   useEffect(() => {

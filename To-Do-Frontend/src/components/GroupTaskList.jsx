@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 const GroupTaskList = ({ 
@@ -12,18 +13,24 @@ const GroupTaskList = ({
   showShareButton = false,
   onShareGroup
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskData, setEditTaskData] = useState({ text: '', date: '' });
+  const [groupVisibility, setGroupVisibility] = useState({});
 
   useEffect(() => {
-    if (groups.length > 0) {
-      setIsOpen(true);
-    }
+    // Initialize all groups as visible
+    const initialVisibility = {};
+    groups.forEach(group => {
+      initialVisibility[group._id] = true;
+    });
+    setGroupVisibility(initialVisibility);
   }, [groups]);
 
-  const toggleDropdown = () => {
-    setIsOpen(prev => !prev);
+  const toggleGroupVisibility = (groupId) => {
+    setGroupVisibility(prev => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
   };
 
   const startEditTask = (task) => {
@@ -51,69 +58,73 @@ const GroupTaskList = ({
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-semibold text-purple-600 mb-4 flex justify-between items-center">
+      <h2 className="text-2xl font-semibold text-purple-600 mb-4">
         Group Tasks ({groups.length})
-        <button onClick={toggleDropdown} className="text-gray-500">
-          {isOpen ? '▼' : '▲'}
-        </button>
       </h2>
-      {isOpen && (
-        <div className="max-h-80 overflow-y-auto overflow-x-hidden">
-          {groups.length === 0 && <div className="text-gray-400 text-center mb-4">No group tasks</div>}
-          <div className="space-y-4">
-            {groups.map(group => {
-              const activeTasks = group.tasks?.filter(task => !task.completed && !task.deleted) || [];
-              const completedTasks = group.tasks?.filter(task => task.completed && !task.deleted) || [];
-              const allCompleted = activeTasks.length === 0 && completedTasks.length > 0;
+      <div className="max-h-80 overflow-y-auto overflow-x-hidden">
+        {groups.length === 0 && <div className="text-gray-400 text-center mb-4">No group tasks</div>}
+        <div className="space-y-4">
+          {groups.map(group => {
+            const activeTasks = group.tasks?.filter(task => !task.completed && !task.deleted) || [];
+            const completedTasks = group.tasks?.filter(task => task.completed && !task.deleted) || [];
+            const allCompleted = activeTasks.length === 0 && completedTasks.length > 0;
+            const isVisible = groupVisibility[group._id];
 
-              return (
-                <div key={group._id} className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-semibold text-purple-800">{group.name}</h3>
-                      <span className="text-sm text-purple-600">
-                        ({group.tasks?.filter(t => !t.deleted).length || 0} tasks)
+            return (
+              <div key={group._id} className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => toggleGroupVisibility(group._id)}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      {isVisible ? '▼' : '▲'}
+                    </button>
+                    <h3 className="text-lg font-semibold text-purple-800">{group.name}</h3>
+                    <span className="text-sm text-purple-600">
+                      ({group.tasks?.filter(t => !t.deleted).length || 0} tasks)
+                    </span>
+                    {group.completed && (
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                        Completed
                       </span>
-                      {group.completed && (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                          Completed
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {showShareButton && onShareGroup && (
-                        <button
-                          onClick={() => onShareGroup(group)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Share
-                        </button>
-                      )}
-                      {allCompleted && !group.completed && (
-                        <button
-                          onClick={() => {
-                            if (window.confirm('Once marked as completed, this action cannot be undone. Are you sure?')) {
-                              onCompleteGroup(group._id);
-                            }
-                          }}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Complete Group
-                        </button>
-                      )}
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {showShareButton && onShareGroup && (
+                      <button
+                        onClick={() => onShareGroup(group)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Share
+                      </button>
+                    )}
+                    {allCompleted && !group.completed && (
                       <button
                         onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
-                            onDeleteGroup(group._id);
+                          if (window.confirm('Once marked as completed, this action cannot be undone. Are you sure?')) {
+                            onCompleteGroup(group._id);
                           }
                         }}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
                       >
-                        Delete Group
+                        Complete Group
                       </button>
-                    </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
+                          onDeleteGroup(group._id);
+                        }
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Delete Group
+                    </button>
                   </div>
+                </div>
 
+                {isVisible && (
                   <div className="space-y-3">
                     {/* Active Tasks */}
                     {activeTasks.length > 0 && (
@@ -158,11 +169,7 @@ const GroupTaskList = ({
                                 </div>
                                 <div className="flex space-x-1">
                                   <button
-                                    onClick={() => {
-                                      if (window.confirm('Once marked as completed, this task cannot be undone. Are you sure?')) {
-                                        handleCompleteTask(task._id);
-                                      }
-                                    }}
+                                    onClick={() => handleCompleteTask(task._id)}
                                     className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs"
                                   >
                                     Complete
@@ -204,12 +211,12 @@ const GroupTaskList = ({
                       </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };
