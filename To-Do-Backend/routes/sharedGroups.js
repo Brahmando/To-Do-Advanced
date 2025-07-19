@@ -149,15 +149,39 @@ router.get('/:id', auth, async (req, res) => {
     }
 
     // Check if user has access
-    const hasAccess = group.owner.toString() === userId || 
-                      group.members.some(member => member.user.toString() === userId) ||
-                      group.isPublic;
+    const isOwner = group.owner.toString() === userId;
+    const isMember = group.members.some(member => member.user.toString() === userId);
+    const hasAccess = isOwner || isMember || group.isPublic;
 
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    res.json(group);
+    // Convert to plain object to modify the response
+    const groupData = group.toObject();
+    
+    // Debug logging
+    console.log('Group data before modification:', JSON.stringify({
+      accessKey: groupData.accessKey,
+      isOwner,
+      userId,
+      groupOwner: group.owner.toString()
+    }, null, 2));
+    
+    // Only include access key if the user is the owner
+    if (!isOwner) {
+      delete groupData.accessKey;
+    } else {
+      console.log('Including access key for owner:', groupData.accessKey);
+    }
+
+    console.log('Sending group data to client:', JSON.stringify({
+      accessKey: groupData.accessKey ? '***HIDDEN***' : undefined,
+      isPrivate: groupData.isPrivate,
+      name: groupData.name
+    }, null, 2));
+
+    res.json(groupData);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
