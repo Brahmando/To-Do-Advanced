@@ -45,6 +45,7 @@ const SharedGroupDetail = ({ user }) => {
   const [showRoleUpgradeModal, setShowRoleUpgradeModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showTransferOwnershipModal, setShowTransferOwnershipModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState('');
   const [commitAction, setCommitAction] = useState(null);
   const [commitMessage, setCommitMessage] = useState('');
@@ -52,6 +53,7 @@ const SharedGroupDetail = ({ user }) => {
   const [editingTask, setEditingTask] = useState(null);
   const [roleUpgradeStatus, setRoleUpgradeStatus] = useState(null);
   const [selectedUpgradeRole, setSelectedUpgradeRole] = useState('medium');
+  const [showAccessKeyCopied, setShowAccessKeyCopied] = useState(false);
 
   // Update selected role when modal opens to ensure it's valid
   const getDefaultUpgradeRole = () => {
@@ -91,7 +93,18 @@ const SharedGroupDetail = ({ user }) => {
   const fetchGroup = async () => {
     try {
       const groupData = await getSharedGroup(id);
-      console.log(groupData);
+      console.log('Group data:', groupData);
+      console.log('Is private:', groupData?.isPrivate);
+      console.log('Access key exists:', !!groupData?.accessKey);
+      console.log('Current user ID:', user?.id);
+      console.log('Group owner ID:', groupData?.owner);
+      console.log('Is current user owner:', user?.id === groupData?.owner);
+      console.log('Group members:', groupData?.members);
+      
+      // Log the condition that should show the button
+      const showButton = !groupData?.isPublic && user?.id === groupData?.owner;
+      console.log('Should show copy access key button:', showButton, 'because isPublic:', groupData?.isPublic, 'and isOwner:', user?.id === groupData?.owner);
+      
       setGroup(groupData);
     } catch (error) {
       console.error('Error fetching group:', error);
@@ -226,7 +239,28 @@ const SharedGroupDetail = ({ user }) => {
     } catch (error) {
       console.error('Failed to delete group:', error);
     }
-  }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteConfirm(false);
+    handleDeleteGroup(group._id, `Deleted group: ${group.name}`);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  const handleCopyAccessKey = () => {
+    if (group?.accessKey) {
+      navigator.clipboard.writeText(group.accessKey);
+      setShowAccessKeyCopied(true);
+      setTimeout(() => setShowAccessKeyCopied(false), 2000);
+    }
+  };
     
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -515,10 +549,65 @@ const SharedGroupDetail = ({ user }) => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{group.name}</h1>
-              {group.description && (
-                <p className="text-gray-600 mt-1">{group.description}</p>
-              )}
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-2xl font-bold text-gray-800">{group.name}</h1>
+                  {!group.isPublic && group.owner === user?.id && (
+                    <div className="relative">
+                      <div className="relative group">
+                        <button
+                          onClick={handleCopyAccessKey}
+                          className="flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border-2 border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-400 transition-all duration-200 shadow-sm"
+                          title="Copy access key to share with others"
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-4 w-4" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" 
+                            />
+                          </svg>
+                          <span>Access Key</span>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-3.5 w-3.5 ml-0.5 opacity-70" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" 
+                            />
+                          </svg>
+                        </button>
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-amber-300 group-hover:w-[calc(100%-0.5rem)] transition-all duration-300"></div>
+                        
+                        {showAccessKeyCopied && (
+                          <div className="absolute left-0 -bottom-9 bg-green-100 text-green-800 text-xs px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-md border border-green-200 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Copied to clipboard!
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {group.description && (
+                  <p className="text-gray-600 mt-1">{group.description}</p>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <span 
@@ -557,12 +646,39 @@ const SharedGroupDetail = ({ user }) => {
             </div>
             <div className="flex items-center space-x-2">
               {canDelete() && (
-                <button
-                  onClick={()=>handleDeleteGroup(group._id, `Deleted group: ${group.name}`)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
-                >
-                  Delete Group
-                </button>
+                <>
+                  <button
+                    onClick={handleDeleteClick}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    Delete Group
+                  </button>
+                  {showDeleteConfirm && (
+                    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                      <div className="bg-white p-7 rounded-2xl shadow-2xl max-w-sm w-full mx-3 border-2 border-red-200">
+                        <h3 className="text-lg font-bold text-red-700 mb-3 flex items-center">
+                          <svg xmlns='http://www.w3.org/2000/svg' className='h-5 w-5 mr-2 text-red-500' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' /></svg>
+                          Delete Group?
+                        </h3>
+                        <p className="text-gray-700 mb-6">This action cannot be undone. All tasks, members, and history will be <span className='font-semibold text-red-600'>permanently deleted</span>.<br/>Are you sure you want to delete <span className='font-semibold'>{group.name}</span>?</p>
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={handleCancelDelete}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleConfirmDelete}
+                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+                          >
+                            Yes, Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <button
