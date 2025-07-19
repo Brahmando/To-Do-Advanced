@@ -9,7 +9,7 @@ pnpm-debug.log*
 lerna-debug.log*
 .upm
 node_modules
-.env
+
 dist
 dist-ssr
 *.local

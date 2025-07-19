@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task'); // Assuming your model is in models/Task.js
+const auth = require('../middleware/auth');
 const {
   createTask,
   getTasks,

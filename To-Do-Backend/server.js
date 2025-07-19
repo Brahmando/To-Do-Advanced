@@ -8,8 +8,10 @@ const groupRoutes = require('./routes/groups');
 const sharedGroupRoutes = require('./routes/sharedGroups');
 
 const app = express();
+
+
 const port = process.env.PORT || 5000;
-const mongoUri = process.env.MONGODB_URI;
+const mongoUri = "mongodb+srv://powerangerinfinite123:n2n1RXzFsHFfzmNJ@mongocluster.pe7odxo.mongodb.net/todo_app?retryWrites=true&w=majority&appName=MongoCluster";
 
 // Middleware
 app.use(express.json());

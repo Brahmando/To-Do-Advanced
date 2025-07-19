@@ -21,7 +21,7 @@ const SignupModal = ({ isOpen, onClose, onSignup, onSwitchToLogin }) => {
     }
 
     try {
-      const response = await fetch('https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api/auth/register', {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

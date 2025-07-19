@@ -1,30 +1,96 @@
-# To-Do App
+# Advanced To-Do Application
 
-Welcome to the To-Do App! This application allows users to manage their tasks effectively while providing a user-friendly interface. The app is built using React for the frontend and Node.js with Express for the backend, and it connects to a MongoDB database.
+A comprehensive task management solution with real-time collaboration features. Built with the MERN stack (MongoDB, Express.js, React, Node.js) for seamless personal and team productivity.
 
-## Features
+## 🚀 Key Features
 
-- **User Authentication:** Users can sign up, log in, and manage their tasks securely.
-- **Task Management:** Create, complete, undo, and delete tasks.
-- **Guest Mode:** Users can use the app without logging in, allowing them to manage tasks temporarily.
-- **Responsive Design:** The app is styled with Tailwind CSS ensuring a great user experience on both desktop and mobile devices.
+### 📝 Task Management
+- Create, edit, and organize tasks with due dates and priorities
+- Mark tasks as complete/incomplete with visual indicators
+- Set and track deadlines with calendar integration
+- Categorize and filter tasks for better organization
 
-## Tech Stack
+### 👥 Team Collaboration
+- **Public & Private Groups**: Create groups with different visibility settings
+- **Role-Based Access Control**:
+  - **Owner**: Full administrative control
+  - **Collaborator**: Add/edit/delete tasks
+  - **Medium Access**: Add and edit own tasks
+  - **Observer**: View-only access
+- **Activity Feed**: Track all changes in real-time
 
-- **Frontend:** React, Vite, Tailwind CSS
-- **Backend:** Node.js, Express
-- **Database:** MongoDB
+### 🔒 Security & Access
+- Secure authentication with JWT
+- Private groups with access key protection
+- Role-based permissions system
+- Secure API endpoints
 
-## Getting Started
+## 🛠️ Tech Stack
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+### Frontend
+- React with Hooks
+- Context API for state management
+- Tailwind CSS for styling
+- Native Fetch API for HTTP requests
+
+### Backend
+- Node.js with Express.js
+- MongoDB with Mongoose ODM
+- JWT Authentication
+- RESTful API design
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-Make sure you have [Node.js](https://nodejs.org/en/download/) and [npm](https://www.npmjs.com/get-npm) installed on your machine.
+- Node.js (v14+)
+- MongoDB (local or Atlas)
+- npm or yarn
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**
    ```bash
    git clone https://github.com/Brahmando/To-Do-Advanced.git
+   cd To-Do-Advanced
+   ```
+
+2. **Set up the backend**
+   ```bash
+   cd To-Do-Backend
+   npm install
+   ```
+
+3. **Set up the frontend**
+   ```bash
+   cd ../To-Do-Frontend
+   npm install
+   ```
+
+4. **Environment Setup**
+   - Create a `.env` file in the backend directory:
+     ```
+     MONGODB_URI=your_mongodb_connection_string
+     JWT_SECRET=your_jwt_secret_key
+     PORT=5000
+     ```
+
+5. **Run the application**
+   ```bash
+   # Start backend
+   cd To-Do-Backend
+   npm start
+
+   # Start frontend (in a new terminal)
+   cd To-Do-Frontend
+   npm run dev
+   ```
+
+   The app will be available at `http://localhost:3000`
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

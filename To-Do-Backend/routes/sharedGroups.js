@@ -40,6 +40,24 @@ router.get('/search', auth, async (req, res) => {
   }
 });
 
+// Find group by name (for private group joining)
+router.get('/find-by-name/:name', auth, async (req, res) => {
+  try {
+    const groupName = decodeURIComponent(req.params.name);
+    
+    const group = await SharedGroup.findOne({ name: groupName })
+      .select('_id name isPublic accessKey owner');
+    
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    res.json(group);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Add this route for user notifications
 router.get('/user-notifications', auth, async (req, res) => {
   try {
@@ -76,14 +94,35 @@ router.get('/user-notifications', auth, async (req, res) => {
       // Check for request status updates if user made requests
       if (group.joinRequests) {
         for (const request of group.joinRequests) {
-          if (request.user.toString() === userId && request.status !== 'pending') {
-            notifications.push({
-              type: 'request_update',
-              groupId: group._id,
-              groupName: group.name,
-              status: request.status,
-              createdAt: request.updatedAt || request.createdAt
-            });
+          if (request.user.toString() === userId && !request.dismissed) {
+            if (request.status === 'pending') {
+              // Informational notification for pending requests
+              notifications.push({
+                type: 'request_sent',
+                groupId: group._id,
+                groupName: group.name,
+                requestId: request._id,
+                requestedRole: request.requestedRole,
+                message: `You have sent a request to change observer to ${request.requestedRole} status in this group`,
+                createdAt: request.createdAt,
+                dismissible: true
+              });
+            } else if (request.status !== 'pending') {
+              // Status update notifications (approved/rejected)
+              notifications.push({
+                type: 'request_update',
+                groupId: group._id,
+                groupName: group.name,
+                requestId: request._id,
+                status: request.status,
+                requestedRole: request.requestedRole,
+                message: request.status === 'approved' 
+                  ? `Your request to upgrade to ${request.requestedRole} has been approved`
+                  : `Your request to upgrade to ${request.requestedRole} has been rejected`,
+                createdAt: request.updatedAt || request.createdAt,
+                dismissible: true
+              });
+            }
           }
         }
       }
@@ -162,12 +201,38 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Delete shared group
+router.delete('/:id/delete', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const groupId = req.params.id;
+    
+    const user = await User.findById(userId);
+    const group = await SharedGroup.findById(groupId);
+    
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    const member = group.members.find(m => m.user.toString() === userId);
+    if (!member || !['owner', 'collaborator'].includes(member.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    await group.deleteOne({ _id: groupId });
+    res.json({ message: 'Group deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}); 
+
 // Join group
 router.post('/:id/join', auth, async (req, res) => {
   try {
     const { accessKey, role = 'observer' } = req.body;
     const userId = req.user.userId;
     const groupId = req.params.id;
+    console.log(groupId)
     
     const user = await User.findById(userId);
     const group = await SharedGroup.findById(groupId);
@@ -184,11 +249,11 @@ router.post('/:id/join', auth, async (req, res) => {
 
     // For private groups, check access key
     if (!group.isPublic && group.accessKey !== accessKey) {
-      return res.status(403).json({ error: 'Invalid access key' });
+      return res.status(403).json({ error: 'Failed to join group. Please check your credentials.' });
     }
 
-    // For public groups or observer role, join immediately
-    if (group.isPublic && role === 'observer') {
+    // For observer role (both public and private groups), join immediately
+    if (role === 'observer') {
       group.members.push({
         user: userId,
         userName: user.name,
@@ -209,7 +274,7 @@ router.post('/:id/join', auth, async (req, res) => {
       return res.json({ message: 'Successfully joined the group' });
     }
 
-    // For collaborator or medium access, create join request
+    // For collaborator or medium access, create join request (both public and private)
     if (role === 'collaborator' || role === 'medium') {
       const existingRequest = group.joinRequests.find(
         request => request.user.toString() === userId && request.status === 'pending'
@@ -264,19 +329,29 @@ router.put('/:id/join-request/:requestId', auth, async (req, res) => {
     const joinRequest = group.joinRequests[requestIndex];
     
     if (action === 'approve') {
-      // Add user to members
-      group.members.push({
-        user: joinRequest.user,
-        userName: joinRequest.userName,
-        role: joinRequest.requestedRole
-      });
+      // Find existing member and update their role instead of adding duplicate
+      const existingMemberIndex = group.members.findIndex(
+        member => member.user.toString() === joinRequest.user.toString()
+      );
+      
+      if (existingMemberIndex !== -1) {
+        // Update existing member's role
+        group.members[existingMemberIndex].role = joinRequest.requestedRole;
+      } else {
+        // Add new member if they don't exist (shouldn't happen for role upgrades)
+        group.members.push({
+          user: joinRequest.user,
+          userName: joinRequest.userName,
+          role: joinRequest.requestedRole
+        });
+      }
       
       // Add to change log
       group.changeLog.push({
         user: userId,
         userName: group.ownerName,
-        action: 'approved_join_request',
-        commitMessage: `Approved ${joinRequest.userName} as ${joinRequest.requestedRole}`
+        action: 'approved_role_upgrade',
+        commitMessage: `Approved ${joinRequest.userName} role upgrade to ${joinRequest.requestedRole}`
       });
       
       joinRequest.status = 'approved';
@@ -492,6 +567,8 @@ router.delete('/:id/tasks/:taskId', auth, async (req, res) => {
 
 // Reorder tasks
 router.put('/:id/reorder', auth, async (req, res) => {
+  console.log('coming here')
+
   try {
     const { taskIds, commitMessage } = req.body;
     const userId = req.user.userId;
@@ -509,26 +586,63 @@ router.put('/:id/reorder', auth, async (req, res) => {
       return res.status(403).json({ error: 'Insufficient permissions to reorder tasks' });
     }
 
-    // Update task orders
+    // Log the incoming task order
+    console.log('Reordering tasks. New order:', taskIds);
+    
+    // Create a map of task IDs to their new order
+    const taskOrderMap = new Map();
     taskIds.forEach((taskId, index) => {
-      const task = group.tasks.find(t => t._id.toString() === taskId);
-      if (task) {
-        task.order = index;
-      }
+      taskOrderMap.set(taskId, index);
     });
 
+    // Update task orders and maintain the original task objects
+    const updatedTasks = group.tasks.map(task => {
+      const newOrder = taskOrderMap.get(task._id.toString());
+      if (newOrder !== undefined) {
+        return {
+          ...task.toObject(),
+          order: newOrder
+        };
+      }
+      return task;
+    });
+
+    // Sort tasks by the new order
+    updatedTasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    // Log the updated task orders
+    console.log('Updated task orders:', updatedTasks.map(t => ({
+      _id: t._id,
+      text: t.text,
+      order: t.order
+    })));
+
+    // Update the group's tasks
+    group.tasks = updatedTasks;
+    
+    // Add to change log
     group.changeLog.push({
       user: userId,
       userName: user.name,
       action: 'reordered_tasks',
-      commitMessage: commitMessage || 'Reordered tasks'
+      commitMessage: commitMessage || 'Reordered tasks',
+      timestamp: new Date()
     });
     
     group.totalChanges += 1;
     group.lastActivity = new Date();
     
-    await group.save();
-    res.json(group);
+    // Mark tasks as modified to ensure they get saved
+    group.markModified('tasks');
+    
+    // Save and return the updated group
+    const savedGroup = await group.save();
+    
+    // Ensure we return the tasks in the correct order
+    const responseGroup = await SharedGroup.findById(groupId);
+    responseGroup.tasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    res.json(responseGroup);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -562,6 +676,347 @@ router.get('/notifications/requests', auth, async (req, res) => {
     });
 
     res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Role upgrade request routes
+router.post('/:id/role-upgrade-request', auth, async (req, res) => {
+  try {
+    const { requestedRole, message } = req.body;
+    const userId = req.user.userId;
+    const groupId = req.params.id;
+    
+    const user = await User.findById(userId);
+    const group = await SharedGroup.findById(groupId);
+    
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Check if user is a member of the group
+    const member = group.members.find(m => m.user.toString() === userId);
+    if (!member) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+    
+    // Check if user is owner (owners cannot request upgrades)
+    if (member.role === 'owner') {
+      return res.status(400).json({ error: 'Owners cannot request role changes' });
+    }
+    
+    // Check if user is requesting the same role they already have
+    if (member.role === requestedRole) {
+      return res.status(400).json({ error: 'You already have this role' });
+    }
+    
+    // Check if user has a pending request
+    const existingRequest = group.joinRequests.find(
+      request => request.user.toString() === userId && request.status === 'pending'
+    );
+    
+    if (existingRequest) {
+      // Check if 7 days have passed since the last request
+      const daysSinceRequest = (new Date() - existingRequest.createdAt) / (1000 * 60 * 60 * 24);
+      if (daysSinceRequest < 7) {
+        const daysLeft = Math.ceil(7 - daysSinceRequest);
+        return res.status(400).json({ 
+          error: `You have a pending request. Please wait ${daysLeft} more day(s) before requesting again.`,
+          pendingRequest: true,
+          daysLeft
+        });
+      }
+    }
+    
+    // Create new role upgrade request
+    group.joinRequests.push({
+      user: userId,
+      userName: user.name,
+      requestedRole,
+      message: message || `Request to upgrade role from ${member.role} to ${requestedRole}`,
+      status: 'pending',
+      createdAt: new Date()
+    });
+    
+    group.lastActivity = new Date();
+    await group.save();
+    
+    res.json({ 
+      message: `Role upgrade request sent to group owner`,
+      notification: `You have sent a request to change ${member.role} to ${requestedRole} status`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user's role upgrade status for a specific group
+router.get('/:id/role-upgrade-status', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const groupId = req.params.id;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Check if user is a member
+    const member = group.members.find(m => m.user.toString() === userId);
+    if (!member) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+    
+    // Find user's pending request
+    const pendingRequest = group.joinRequests.find(
+      request => request.user.toString() === userId && request.status === 'pending'
+    );
+    
+    if (pendingRequest) {
+      const daysSinceRequest = (new Date() - pendingRequest.createdAt) / (1000 * 60 * 60 * 24);
+      const daysLeft = Math.max(0, Math.ceil(7 - daysSinceRequest));
+      
+      return res.json({
+        hasPendingRequest: true,
+        requestedRole: pendingRequest.requestedRole,
+        daysLeft,
+        canRequestAgain: daysLeft === 0
+      });
+    }
+    
+    res.json({
+      hasPendingRequest: false,
+      canRequestAgain: true
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Dismiss notification (mark as read/dismissed)
+router.put('/notifications/:groupId/dismiss/:requestId', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { groupId, requestId } = req.params;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Find the request and mark it as dismissed for this user
+    const request = group.joinRequests.find(
+      req => req._id.toString() === requestId && req.user.toString() === userId
+    );
+    
+    if (request) {
+      request.dismissed = true;
+      request.dismissedAt = new Date();
+      await group.save();
+    }
+    
+    res.json({ message: 'Notification dismissed' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Exit group
+router.post('/:id/exit', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const groupId = req.params.id;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    const member = group.members.find(m => m.user.toString() === userId);
+    if (!member) {
+      return res.status(404).json({ error: 'You are not a member of this group' });
+    }
+    
+    // Check if user is owner
+    if (member.role === 'owner') {
+      // Owner can only exit if there are other members to transfer ownership to
+      const otherMembers = group.members.filter(m => m.user.toString() !== userId);
+      if (otherMembers.length === 0) {
+        return res.status(400).json({ error: 'Cannot exit group as the only member. Delete the group instead.' });
+      }
+      return res.status(400).json({ error: 'Owners must transfer ownership before exiting the group' });
+    }
+    
+    // Remove member from group
+    group.members = group.members.filter(m => m.user.toString() !== userId);
+    
+    // Add to change log
+    group.changeLog.push({
+      user: userId,
+      userName: member.userName,
+      action: 'left_group',
+      commitMessage: `${member.userName} left the group`,
+      timestamp: new Date()
+    });
+    
+    group.totalChanges += 1;
+    group.lastActivity = new Date();
+    await group.save();
+    
+    res.json({ message: 'Successfully exited the group' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Transfer ownership
+router.put('/:id/transfer-ownership', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const groupId = req.params.id;
+    const { newOwnerId } = req.body;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Check if current user is owner
+    const currentOwner = group.members.find(m => m.user.toString() === userId && m.role === 'owner');
+    if (!currentOwner) {
+      return res.status(403).json({ error: 'Only the owner can transfer ownership' });
+    }
+    
+    // Check if new owner is a member
+    const newOwner = group.members.find(m => m.user.toString() === newOwnerId);
+    if (!newOwner) {
+      return res.status(404).json({ error: 'New owner must be a member of the group' });
+    }
+    
+    // Update roles
+    currentOwner.role = 'collaborator';
+    newOwner.role = 'owner';
+    
+    // Update group owner
+    group.owner = newOwnerId;
+    group.ownerName = newOwner.userName;
+    
+    // Add to change log
+    group.changeLog.push({
+      user: userId,
+      userName: currentOwner.userName,
+      action: 'transferred_ownership',
+      commitMessage: `Transferred ownership to ${newOwner.userName}`,
+      timestamp: new Date()
+    });
+    
+    group.totalChanges += 1;
+    group.lastActivity = new Date();
+    await group.save();
+    
+    res.json({ message: 'Ownership transferred successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update member role
+router.put('/:id/members/:memberId/role', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: groupId, memberId } = req.params;
+    const { role } = req.body;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Check if current user is owner
+    const currentUser = group.members.find(m => m.user.toString() === userId);
+    if (!currentUser || currentUser.role !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can change member roles' });
+    }
+    
+    // Find the member to update
+    const member = group.members.find(m => m.user.toString() === memberId);
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    // Cannot change owner role
+    if (member.role === 'owner') {
+      return res.status(400).json({ error: 'Cannot change owner role' });
+    }
+    
+    const oldRole = member.role;
+    member.role = role;
+    
+    // Add to change log
+    group.changeLog.push({
+      user: userId,
+      userName: currentUser.userName,
+      action: 'changed_member_role',
+      commitMessage: `Changed ${member.userName} role from ${oldRole} to ${role}`,
+      timestamp: new Date()
+    });
+    
+    group.totalChanges += 1;
+    group.lastActivity = new Date();
+    await group.save();
+    
+    res.json({ message: 'Member role updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove member
+router.delete('/:id/members/:memberId', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: groupId, memberId } = req.params;
+    
+    const group = await SharedGroup.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    // Check if current user is owner
+    const currentUser = group.members.find(m => m.user.toString() === userId);
+    if (!currentUser || currentUser.role !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can remove members' });
+    }
+    
+    // Find the member to remove
+    const member = group.members.find(m => m.user.toString() === memberId);
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    // Cannot remove owner
+    if (member.role === 'owner') {
+      return res.status(400).json({ error: 'Cannot remove the owner' });
+    }
+    
+    // Remove member
+    group.members = group.members.filter(m => m.user.toString() !== memberId);
+    
+    // Add to change log
+    group.changeLog.push({
+      user: userId,
+      userName: currentUser.userName,
+      action: 'removed_member',
+      commitMessage: `Removed ${member.userName} from the group`,
+      timestamp: new Date()
+    });
+    
+    group.totalChanges += 1;
+    group.lastActivity = new Date();
+    await group.save();
+    
+    res.json({ message: 'Member removed successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

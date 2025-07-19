@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
@@ -106,12 +106,13 @@ export const joinSharedGroup = async (groupId, joinData) => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error joining shared group:', error);
+    console.log('Error joining shared group:', error);
     throw error;
   }
 };
@@ -211,7 +212,27 @@ export const deleteTaskFromSharedGroup = async (groupId, taskId, commitMessage) 
   }
 };
 
+export const deleteSharedGroup = async (groupId, commitMessage) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/delete`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+      body: JSON.stringify({ commitMessage })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting shared group:', error);
+    throw error;
+  }
+};
+
 export const reorderTasksInSharedGroup = async (groupId, taskIds, commitMessage) => {
+  console.log('coming here')
   try {
     const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/reorder`, {
       method: 'PUT',
@@ -278,6 +299,140 @@ export const markNotificationAsRead = async (notificationId) => {
     return await response.json();
   } catch (error) {
     console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+// Role upgrade request functions
+export const requestRoleUpgrade = async (groupId, requestData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/role-upgrade-request`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error requesting role upgrade:', error);
+    throw error;
+  }
+};
+
+export const getUserRoleUpgradeStatus = async (groupId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/role-upgrade-status`, {
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching role upgrade status:', error);
+    throw error;
+  }
+};
+
+export const dismissNotification = async (groupId, requestId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/notifications/${groupId}/dismiss/${requestId}`, {
+      method: 'PUT',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error dismissing notification:', error);
+    throw error;
+  }
+};
+
+export const exitGroup = async (groupId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/exit`, {
+      method: 'POST',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error exiting group:', error);
+    throw error;
+  }
+};
+
+export const transferOwnership = async (groupId, newOwnerId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/transfer-ownership`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ newOwnerId })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error transferring ownership:', error);
+    throw error;
+  }
+};
+
+export const updateMemberRole = async (groupId, memberId, newRole) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/members/${memberId}/role`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ role: newRole })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating member role:', error);
+    throw error;
+  }
+};
+
+export const removeMember = async (groupId, memberId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shared-groups/${groupId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error removing member:', error);
     throw error;
   }
 };

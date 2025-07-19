@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 
 const DeletedList = ({ deleted, formatDate }) => {
   const [isOpen, setIsOpen] = useState(false);

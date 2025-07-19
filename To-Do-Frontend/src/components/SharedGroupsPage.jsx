@@ -21,11 +21,13 @@ const SharedGroupsPage = ({ user }) => {
 
   useEffect(() => {
     fetchSharedGroups();
+    console.log(user)
   }, []);
 
   const fetchSharedGroups = async () => {
     try {
       const groups = await getSharedGroups();
+      console.log(groups)
       setSharedGroups(groups);
     } catch (error) {
       console.error('Error fetching shared groups:', error);
@@ -42,6 +44,7 @@ const SharedGroupsPage = ({ user }) => {
 
     try {
       const groups = await searchPublicGroups(query);
+      console.log(groups);
       setPublicGroups(groups);
     } catch (error) {
       console.error('Error searching groups:', error);
@@ -61,13 +64,37 @@ const SharedGroupsPage = ({ user }) => {
 
   const handleJoinGroup = async (joinData) => {
     try {
-      await joinSharedGroup(joinData.groupId, joinData);
+      // First, find the group by name to get its ID
+      const response = await fetch(`http://localhost:5000/api/shared-groups/find-by-name/${encodeURIComponent(joinData.groupName)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Group not found');
+      }
+      
+      const group = await response.json();
+      
+      // Now join the group using its ID
+      await joinSharedGroup(group._id, {
+        accessKey: joinData.accessKey,
+        role: joinData.role,
+        message: joinData.message
+      });
+      
       setShowJoinModal(false);
       fetchSharedGroups();
-      alert('Successfully joined the group!');
+      
+      if (joinData.role === 'observer') {
+        alert('Successfully joined the group!');
+      } else {
+        alert('Join request sent to group owner for approval!');
+      }
     } catch (error) {
       console.error('Error joining group:', error);
-      alert('Failed to join group. Please check your credentials.');
+      alert(error.message || 'Failed to join group. Please check your credentials.');
     }
   };
 
@@ -197,6 +224,7 @@ const SharedGroupsPage = ({ user }) => {
                   <SharedGroupCard
                     key={group._id}
                     group={group}
+                    isPublic={group.isPublic}
                     userRole={getUserRole(group)}
                     onRefresh={fetchSharedGroups}
                   />
@@ -248,15 +276,20 @@ const SharedGroupsPage = ({ user }) => {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Public Groups</h3>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {publicGroups.map(group => (
-                    <SharedGroupCard
-                      key={group._id}
-                      group={group}
-                      userRole="none"
-                      isPublic={true}
-                      onRefresh={fetchSharedGroups}
-                    />
-                  ))}
+                  {publicGroups.map(group => {
+                    const alreadyJoined = group.members.some(member => member.user === user.id);
+                    console.log(alreadyJoined)
+                    return (
+                      <SharedGroupCard
+                        key={group._id}
+                        group={group}
+                        userRole="none"
+                        isPublic={true}
+                        onRefresh={fetchSharedGroups}
+                        alreadyJoined={alreadyJoined}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
@@ -78,6 +78,25 @@ export const deleteGroup = async (id) => {
     return await response.json();
   } catch (error) {
     console.error('Error deleting group:', error);
+    throw error;
+  }
+};
+
+export const editGroupTask = async (taskId, data) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/groups/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error editing group task:', error);
     throw error;
   }
 };

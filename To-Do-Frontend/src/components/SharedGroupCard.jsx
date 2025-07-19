@@ -3,19 +3,21 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { joinSharedGroup } from '../services/sharedGroupService';
 
-const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
+const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, alreadyJoined }) => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState('observer');
 
   const handleJoinPublicGroup = async () => {
     try {
-      await joinSharedGroup(group._id, { role: selectedRole });
+      await joinSharedGroup(group._id, { role: selectedRole })
       onRefresh();
       setShowJoinModal(false);
       alert('Successfully joined the group!');
-    } catch (error) {
-      console.error('Error joining group:', error);
-      alert('Failed to join group.');
+
+    }
+    catch (error) {
+        console.error('Error joining group:', error);
+        alert(error);
     }
   };
 
@@ -46,7 +48,7 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
           )}
         </div>
         <div className="flex items-center space-x-2">
-          {group.isPublic ? (
+          {isPublic ? (
             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
               Public
             </span>
@@ -95,10 +97,10 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
       <div className="flex space-x-2">
         {userRole === 'none' && isPublic && (
           <button
-            onClick={() => setShowJoinModal(true)}
+            onClick={handleJoinPublicGroup}
             className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg text-sm"
           >
-            Join Group
+            {alreadyJoined ? 'Joined' : 'Join Group'}
           </button>
         )}
         {userRole !== 'none' && (
@@ -112,7 +114,7 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
       </div>
 
       {/* Join Modal for Public Groups */}
-      {showJoinModal && (
+      {/* {showJoinModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
             <h3 className="text-lg font-semibold mb-4">Join {group.name}</h3>
@@ -154,7 +156,7 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh }) => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

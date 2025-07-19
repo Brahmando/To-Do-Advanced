@@ -1,5 +1,6 @@
 
 const mongoose = require('mongoose');
+const Task = require('./Task');
 
 const changeLogSchema = new mongoose.Schema({
   user: {
@@ -69,6 +70,13 @@ const joinRequestSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  dismissed: {
+    type: Boolean,
+    default: false
+  },
+  dismissedAt: {
+    type: Date
   },
   createdAt: {
     type: Date,

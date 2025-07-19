@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+
 
 const GroupTaskList = ({ 
   groups, 
@@ -16,14 +16,30 @@ const GroupTaskList = ({
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskData, setEditTaskData] = useState({ text: '', date: '' });
   const [groupVisibility, setGroupVisibility] = useState({});
+  const [groupSectionView, setGroupSectionView] = useState(false);
+
+    useEffect(() => {
+      // Ensure that the dropdown starts closed
+      setGroupSectionView(false); 
+    }, []);
+
+    const toggleGroupSectionView = () => {
+      setGroupSectionView(prev => !prev);
+    };                            
 
   useEffect(() => {
-    // Initialize all groups as visible
-    const initialVisibility = {};
-    groups.forEach(group => {
-      initialVisibility[group._id] = true;
+    // Set visibility for new groups without overriding existing state
+    setGroupVisibility(prev => {
+      console.log('Previous visibility state:', prev);
+      const newVisibility = { ...prev };
+      groups.forEach(group => {
+        if (newVisibility[group._id] === undefined) {
+          newVisibility[group._id] = false; // Default new groups to visible
+          console.log('New visibility state:', newVisibility);
+        }
+      });
+      return newVisibility;
     });
-    setGroupVisibility(initialVisibility);
   }, [groups]);
 
   const toggleGroupVisibility = (groupId) => {
@@ -37,7 +53,8 @@ const GroupTaskList = ({
     setEditingTask(task._id);
     setEditTaskData({
       text: task.text,
-      date: task.date
+      // Format date for datetime-local input
+      date: task.date.slice(0, 16)
     });
   };
 
@@ -58,10 +75,13 @@ const GroupTaskList = ({
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-semibold text-purple-600 mb-4">
+      <h2 className="text-2xl font-semibold text-purple-600 mb-4 flex justify-between items-center" onClick={toggleGroupSectionView}>
         Group Tasks ({groups.length})
+      <button className="text-gray-500">
+        {groupSectionView ? '▼' : '▲'}
+      </button>
       </h2>
-      <div className="max-h-80 overflow-y-auto overflow-x-hidden">
+      {groupSectionView &&<div className="max-h-80 overflow-y-auto overflow-x-hidden">
         {groups.length === 0 && <div className="text-gray-400 text-center mb-4">No group tasks</div>}
         <div className="space-y-4">
           {groups.map(group => {
@@ -216,7 +236,7 @@ const GroupTaskList = ({
             );
           })}
         </div>
-      </div>
+      </div>} 
     </div>
   );
 };

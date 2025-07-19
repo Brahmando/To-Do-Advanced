@@ -11,44 +11,54 @@ const currentYear = new Date().getFullYear();
 
 const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode, setIsGroupTaskMode, groupName, setGroupName }) => {
   const initial = date ? new Date(date) : new Date();
-  const [year, setYear] = React.useState(initial.getFullYear());
+
+  // Store date parts as strings to allow empty inputs
+  const [year, setYear] = React.useState(String(initial.getFullYear()));
   const [month, setMonth] = React.useState(initial.getMonth());
-  const [day, setDay] = React.useState(initial.getDate());
-  const [hour, setHour] = React.useState(initial.getHours() % 12 || 12); // 12-hour format
-  const [minute, setMinute] = React.useState(initial.getMinutes());
-  const [isPM, setIsPM] = React.useState(initial.getHours() >= 12); // Determine if PM
+  const [day, setDay] = React.useState(String(initial.getDate()));
+  const [hour, setHour] = React.useState(String(initial.getHours() % 12 || 12));
+  const [minute, setMinute] = React.useState(String(initial.getMinutes()));
+  const [isPM, setIsPM] = React.useState(initial.getHours() >= 12);
+  const [dateError, setDateError] = React.useState('');
 
-  const didMount = React.useRef(false);
   React.useEffect(() => {
-    if (!didMount.current) {
-      if (date) {
-        const d = new Date(date);
-        setYear(d.getFullYear());
-        setMonth(d.getMonth());
-        setDay(d.getDate());
-        setHour(d.getHours() % 12 || 12);
-        setMinute(d.getMinutes());
-        setIsPM(d.getHours() >= 12);
+    // Only update the final date string if all parts are valid
+    if (year && day && hour && minute) {
+      const numYear = Number(year);
+      const numDay = Number(day);
+      const numHour = Number(hour);
+      const numMinute = Number(minute);
+
+      let hoursIn24 = numHour;
+      if (isPM && numHour < 12) hoursIn24 = numHour + 12;
+      if (!isPM && numHour === 12) hoursIn24 = 0; // Midnight case
+
+      const d = new Date(numYear, month, numDay, hoursIn24, numMinute);
+
+      if (!isNaN(d.getTime())) {
+        setDate(d.toISOString().slice(0, 16));
+        setDateError(''); // Clear error on valid date
       }
-      didMount.current = true;
     }
-  }, []);
-
-  React.useEffect(() => {
-    if (didMount.current) {
-      const hoursIn24 = isPM ? hour + 12 : hour; // Convert to 24-hour format
-      const d = new Date(year, month, day, hoursIn24, minute, 0, 0);
-      setDate(d.toISOString().slice(0, 16));
-    }
-  }, [year, month, day, hour, minute, isPM]);
+  }, [year, month, day, hour, minute, isPM, setDate]);
 
   const handleDateChange = (type, value) => {
-    if (type === 'year') setYear(Number(value));
-    else if (type === 'month') setMonth(Number(value));
-    else if (type === 'day') setDay(Number(value));
-    else if (type === 'hour') setHour(Number(value));
-    else if (type === 'minute') setMinute(Number(value));
-    else if (type === 'ampm') setIsPM(value === 'PM');
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (type === 'year' && numericValue.length <= 4) setYear(numericValue);
+    if (type === 'month') setMonth(Number(numericValue));
+    if (type === 'day' && numericValue.length <= 2) setDay(numericValue);
+    if (type === 'hour' && numericValue.length <= 2) setHour(numericValue);
+    if (type === 'minute' && numericValue.length <= 2) setMinute(numericValue);
+    if (type === 'ampm') setIsPM(value === 'PM');
+  };
+
+  const handleAddTask = () => {
+    if (!year || !day || !hour || !minute) {
+      setDateError('All date and time fields are required.');
+      return;
+    }
+    setDateError('');
+    handleAdd();
   };
 
   return (
@@ -90,32 +100,28 @@ const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode,
         <div className="flex flex-col md:flex-row items-center gap-2 flex-grow">
           <div className="flex  px-1 md:px-2 py-2 rounded-2xl backdrop-blur-md bg-white/40 border border-blue-100 items-center">
             <input
-              type="number"
+              type="text" // Changed from number to text
               value={day}
               onChange={e => handleDateChange('day', e.target.value)}
-              min={1}
-              max={31}
-              className="w-16 appearance-none rounded-lg border-none bg-transparent px-2 py-1 focus:ring-2 focus:ring-indigo-200 outline-none text-xl"
+              placeholder="DD"
+              className="w-16 appearance-none rounded-lg border-none bg-transparent px-2 py-1 focus:ring-2 focus:ring-indigo-200 outline-none text-xl text-center"
             />
             <select value={month} onChange={e => handleDateChange('month', e.target.value)} className="appearance-none rounded-lg border-none bg-transparent px-2 py-1 focus:ring-2 focus:ring-indigo-200 outline-none font-bold">
               {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
             </select>
             <input
-              type="number"
+              type="text" // Changed from number to text
               value={year}
-              min={currentYear}
-              max={currentYear + 10}
+              placeholder="YYYY"
               onChange={e => handleDateChange('year', e.target.value)}
               className="w-20 rounded-lg border-none bg-transparent px-2 py-1 focus:ring-2 focus:ring-indigo-200 text-xl font-semibold text-indigo-700 text-center appearance-none outline-none"
-              style={{ MozAppearance: 'textfield' }}
             />
           </div>
           <div className="flex items-center gap-1 px-2 md:px-4 py-2 rounded-full backdrop-blur-md bg-gradient-to-br from-white/40 to-cyan-100/70 border border-cyan-200">
             <input
-              type="number"
+              type="text" // Changed from number to text
               value={hour}
-              min={1}
-              max={12}
+              placeholder="HH"
               onChange={e => handleDateChange('hour', e.target.value)}
               className="w-14 rounded-lg border-none bg-transparent px-2 py-1 text-xl font-mono focus:ring-2 focus:ring-cyan-200 text-center outline-none"
             />
@@ -128,10 +134,9 @@ const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode,
               <span className="block w-0.5 h-6 bg-gradient-to-b from-cyan-400 to-indigo-400 rounded-full"></span>
             </span>
             <input
-              type="number"
+              type="text" // Changed from number to text
               value={minute}
-              min={0}
-              max={59}
+              placeholder="MM"
               onChange={e => handleDateChange('minute', e.target.value)}
               className="w-14 rounded-lg border-none bg-transparent px-2 py-1 text-xl font-mono focus:ring-2 focus:ring-cyan-200 text-center outline-none"
             />
@@ -139,12 +144,13 @@ const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode,
           </div>
         </div>
         <button
-          onClick={handleAdd}
+          onClick={handleAddTask} // Changed to custom handler
           className="min-w-[8rem] h-12 text-xl font-bold rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-white shadow-xl border-none focus:outline-none focus:ring-2 focus:ring-indigo-300 px-6 transition hover:scale-105 hover:shadow-2xl"
         >
           Add
         </button>
       </div>
+      {dateError && <p className="text-red-500 text-center font-semibold mt-2">{dateError}</p>}
     </div>
   );
 };

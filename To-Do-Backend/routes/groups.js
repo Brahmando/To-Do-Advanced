@@ -122,4 +122,39 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Edit a task within a group
+router.put('/tasks/:taskId', auth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { text, date } = req.body;
+    const userId = req.userId;
+
+    // 1. Authorize: Check if the task belongs to a group owned by the user
+    const group = await Group.findOne({ user: userId, tasks: taskId });
+
+    if (!group) {
+      // If no group is found, the user is not authorized to edit this task
+      return res.status(404).json({ error: 'Task not found or not authorized' });
+    }
+
+    // 2. Update: If authorized, update the task directly in the Task collection
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { text, date },
+      { new: true }
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // 3. Respond with the updated task
+    res.json(updatedTask);
+
+  } catch (error) {
+    console.error('Error editing group task:', error);
+    res.status(500).json({ error: 'Server error while editing task' });
+  }
+});
+
 module.exports = router;

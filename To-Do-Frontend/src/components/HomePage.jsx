@@ -4,7 +4,6 @@ import TaskList from './TaskList';
 import CompletedList from './CompletedList';
 import DeletedList from './DeletedList';
 import GroupTaskList from './GroupTaskList';
-import { handleUndoGroupTask } from '../services/taskService';
 
 
 const HomePage = ({
@@ -29,7 +28,9 @@ const HomePage = ({
   handleCompleteGroup,
   handleDeleteGroup,
   formatDate,
-  isGuestMode
+  isGuestMode,
+  handleUndoGroupTask,
+  handleEditGroupTask
 }) => {
   return (
     <div className="flex flex-col items-center py-10 px-2">
@@ -63,7 +64,7 @@ const HomePage = ({
             groups={groups}
             handleCompleteTask={handleCompleteGroupTask}
             handleDeleteTask={handleDeleteGroupTask}
-            handleUndoTask={handleUndoGroupTask}
+            handleUndoTask={handleUndoGroupTask} 
             handleEditTask={handleEditGroupTask}
             formatDate={formatDate}
             onCompleteGroup={handleCompleteGroup}

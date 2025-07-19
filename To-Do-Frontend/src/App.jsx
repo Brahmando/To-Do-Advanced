@@ -8,7 +8,7 @@ import DeletedList from './components/DeletedList';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import { getTasks, createTask, completeTask, deleteTask, undoTask } from './services/taskService';
-import { getGroups, createGroup, completeGroup, deleteGroup } from './services/groupService';
+import { getGroups, createGroup, completeGroup, deleteGroup, editGroupTask } from './services/groupService';
 import { getNotifications } from './services/sharedGroupService';
 import GroupTaskModal from './components/GroupTaskModal';
 import GroupTaskList from './components/GroupTaskList';
@@ -393,8 +393,7 @@ function App() {
         localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
         setGroups(updatedGroups);
       } else {
-        const { editTask } = await import('./services/taskService');
-        await editTask(taskId, { text: newText, date: newDate });
+        await editGroupTask(taskId, { text: newText, date: newDate });
         fetchGroups();
       }
     } catch (error) {

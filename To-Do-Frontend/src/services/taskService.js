@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
