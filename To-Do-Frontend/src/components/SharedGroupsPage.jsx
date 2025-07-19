@@ -65,7 +65,7 @@ const SharedGroupsPage = ({ user }) => {
   const handleJoinGroup = async (joinData) => {
     try {
       // First, find the group by name to get its ID
-      const response = await fetch(`http://localhost:5000/api/shared-groups/find-by-name/${encodeURIComponent(joinData.groupName)}`, {
+      const response = await fetch(`https://to-do-advanced-production.up.railway.app/api/shared-groups/find-by-name/${encodeURIComponent(joinData.groupName)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

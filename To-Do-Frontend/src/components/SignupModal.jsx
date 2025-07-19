@@ -21,7 +21,7 @@ const SignupModal = ({ isOpen, onClose, onSignup, onSwitchToLogin }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('https://to-do-advanced-production.up.railway.app/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

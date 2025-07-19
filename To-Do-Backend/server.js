@@ -9,9 +9,9 @@ const sharedGroupRoutes = require('./routes/sharedGroups');
 
 const app = express();
 
-
+// Environment variables
 const port = process.env.PORT || 5000;
-const mongoUri = "mongodb+srv://powerangerinfinite123:n2n1RXzFsHFfzmNJ@mongocluster.pe7odxo.mongodb.net/todo_app?retryWrites=true&w=majority&appName=MongoCluster";
+const mongoUri = process.env.MONGODB_URI;
 
 // Middleware
 app.use(express.json());
@@ -29,7 +29,7 @@ mongoose.connect(mongoUri)
     console.log('MongoDB connected successfully');
     // Start the server
     app.listen(port, () => {
-      console.log(`Server running on port ${port}`,`http://localhost:${port}`);
+      console.log(`Server running on port ${port}`);
     });
   })
   .catch(err => {
