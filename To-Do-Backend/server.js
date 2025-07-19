@@ -5,8 +5,11 @@ require('dotenv').config(); // Load environment variables from .env file
 const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
+const sharedGroupRoutes = require('./routes/sharedGroups');
 
 const app = express();
+
+// Environment variables
 const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI;
 
@@ -18,6 +21,7 @@ app.use(cors());
 app.use('/api/tasks', taskRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/shared-groups', sharedGroupRoutes);
 
 // MongoDB Connection
 mongoose.connect(mongoUri)
@@ -25,7 +29,7 @@ mongoose.connect(mongoUri)
     console.log('MongoDB connected successfully');
     // Start the server
     app.listen(port, () => {
-      console.log(`Server running on port ${port}`,`http://localhost:${port}`);
+      console.log(`Server running on port ${port}`);
     });
   })
   .catch(err => {

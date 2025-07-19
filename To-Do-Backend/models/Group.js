@@ -15,7 +15,7 @@ const groupSchema = new mongoose.Schema({
   tasks: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task'
-  }],
+  }], 
   completed: {
     type: Boolean,
     default: false

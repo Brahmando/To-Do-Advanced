@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
@@ -7,9 +8,14 @@ import DeletedList from './components/DeletedList';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
 import { getTasks, createTask, completeTask, deleteTask, undoTask } from './services/taskService';
-import { getGroups, createGroup, completeGroup, deleteGroup } from './services/groupService';
+import { getGroups, createGroup, completeGroup, deleteGroup, editGroupTask } from './services/groupService';
+import { getNotifications } from './services/sharedGroupService';
 import GroupTaskModal from './components/GroupTaskModal';
 import GroupTaskList from './components/GroupTaskList';
+import SharedGroupsPage from './components/SharedGroupsPage';
+import SharedGroupDetail from './components/SharedGroupDetail';
+import HomePage from './components/HomePage';
+import NotificationBell from './components/NotificationBell';
 
 function formatDate(date) {
   return new Date(date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -30,6 +36,7 @@ function App() {
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups] = useState([]);
   const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -44,11 +51,30 @@ function App() {
     }
   }, []);
 
+  // Fetch notifications periodically for logged-in users
+  useEffect(() => {
+    if (user) {
+      const fetchNotifications = async () => {
+        try {
+          const notifs = await getNotifications();
+          setNotifications(notifs);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      };
+
+      fetchNotifications();
+      // Poll for notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
   const loadGuestTasks = () => {
     const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
     setTasks(guestTasks.filter(task => !task.completed && !task.deleted));
     setCompleted(guestTasks.filter(task => task.completed && !task.deleted));
-    setDeleted(guestTasks.filter(task => task.deleted).slice(-3)); // Always keep the last 3 deleted
+    setDeleted(guestTasks.filter(task => task.deleted).slice(-3));
   };
 
   const saveGuestTasks = (allTasks) => {
@@ -56,7 +82,6 @@ function App() {
   };
 
   const handleAdd = async () => {
-    console.log('user-',user)
     if (!input.trim() || !date) {
       alert('Please enter a task and select a date.');
       return;
@@ -76,10 +101,9 @@ function App() {
     if (isGroupTaskMode) {
       try {
         if (isGuestMode) {
-          // Handle guest mode group tasks
           const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
           let existingGroup = guestGroups.find(g => g.name === groupName);
-          
+
           const newTask = {
             _id: Date.now().toString(),
             text: input,
@@ -105,14 +129,11 @@ function App() {
           localStorage.setItem('guestGroups', JSON.stringify(guestGroups));
           setGroups(guestGroups);
         } else {
-          console.log('Creating group task:', { name: groupName, taskText: input, taskDate: date })
           await createGroup({ name: groupName, taskText: input, taskDate: date });
           fetchGroups();
         }
         setInput('');
         setDate('');
-        // setGroupName('');
-        // setIsGroupTaskMode(false);
       } catch (error) {
         console.error('Error creating group task:', error);
         alert('Failed to create group task.');
@@ -175,13 +196,10 @@ function App() {
           : task
       );
 
-      // After marking the task as deleted, explicitly manage deleted tasks
       const deletedTasks = updatedTasks.filter(task => task.deleted);
 
-      // If there are more than 3 deleted tasks, remove the oldest
       if (deletedTasks.length > 3) {
         const oldestDeletedTask = deletedTasks.sort((a, b) => new Date(a.deletedAt) - new Date(b.deletedAt))[0];
-        // Remove the oldest deleted task from the updated tasks
         const updatedYetAgainTasks = updatedTasks.filter(task => task._id !== oldestDeletedTask._id);
         saveGuestTasks(updatedYetAgainTasks);
       } else {
@@ -229,7 +247,7 @@ function App() {
         .then(data => {
           setTasks(data.filter(task => !task.completed && !task.deleted));
           setCompleted(data.filter(task => task.completed && !task.deleted));
-          setDeleted(data.filter(task => task.deleted).slice(-3)); // Last 3 deleted
+          setDeleted(data.filter(task => task.deleted).slice(-3));
         })
         .catch(error => {
           console.error('Error fetching tasks:', error);
@@ -336,6 +354,54 @@ function App() {
     }
   };
 
+  const handleUndoGroupTask = async (taskId) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task =>
+            task._id === taskId
+              ? { ...task, completed: false, completedAt: null }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await undoTask(taskId);
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error undoing group task:', error);
+      alert('Failed to undo task.');
+    }
+  };
+
+  const handleEditGroupTask = async (taskId, newText, newDate) => {
+    try {
+      if (isGuestMode) {
+        const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+        const updatedGroups = guestGroups.map(group => ({
+          ...group,
+          tasks: group.tasks.map(task =>
+            task._id === taskId
+              ? { ...task, text: newText, date: newDate }
+              : task
+          )
+        }));
+        localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
+        setGroups(updatedGroups);
+      } else {
+        await editGroupTask(taskId, { text: newText, date: newDate });
+        fetchGroups();
+      }
+    } catch (error) {
+      console.error('Error editing group task:', error);
+      alert('Failed to edit task.');
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchTasks();
@@ -403,6 +469,7 @@ function App() {
     setGroups([]);
     setIsGroupTaskMode(false);
     setGroupName('');
+    setNotifications([]);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('guestMode');
@@ -411,95 +478,91 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
-      <Navbar 
-        user={user}
-        isGuestMode={isGuestMode}
-        onLoginClick={() => setShowLoginModal(true)}
-        onSignupClick={() => setShowSignupModal(true)}
-        onLogout={handleLogout}
-        onGroupTaskClick={() => setShowGroupTaskModal(true)}
-      />
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
+        <Navbar 
+          user={user}
+          isGuestMode={isGuestMode}
+          onLoginClick={() => setShowLoginModal(true)}
+          onSignupClick={() => setShowSignupModal(true)}
+          onLogout={handleLogout}
+          onGroupTaskClick={() => setShowGroupTaskModal(true)}
+          notifications={notifications}
+          setNotifications={setNotifications}
+        />
 
-      <div className="flex flex-col items-center py-10 px-2">
-        <div className="w-full max-w-2xl bg-white/80 rounded-3xl shadow-2xl p-8 backdrop-blur-md border border-blue-100">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400 mb-2 text-center drop-shadow-lg">
-            Stunning To-Do App
-          </h1>
-          <p className="text-lg text-gray-600 mb-8 text-center">
-            Organize your day with style ✨
-            {isGuestMode && <span className="text-orange-500"> (Guest Mode)</span>}
-          </p>
-
-          <TaskInput 
-            input={input} 
-            setInput={setInput} 
-            date={date} 
-            setDate={setDate} 
-            handleAdd={handleAdd}
-            isGroupTaskMode={isGroupTaskMode}
-            setIsGroupTaskMode={setIsGroupTaskMode}
-            groupName={groupName}
-            setGroupName={setGroupName}
-          />
-
-          {tasks.length > 0 && (
-            <TaskList tasks={tasks} handleComplete={handleComplete} handleDelete={handleDelete} formatDate={formatDate} />
-          )}
-
-          {groups.length > 0 && (
-            <GroupTaskList 
+        <Routes>
+          <Route path="/" element={
+            <HomePage
+              tasks={tasks}
+              completed={completed}
+              deleted={deleted}
+              input={input}
+              setInput={setInput}
+              date={date}
+              setDate={setDate}
+              handleAdd={handleAdd}
+              handleComplete={handleComplete}
+              handleDelete={handleDelete}
+              handleUndo={handleUndo}
+              isGroupTaskMode={isGroupTaskMode}
+              setIsGroupTaskMode={setIsGroupTaskMode}
+              groupName={groupName}
+              setGroupName={setGroupName}
               groups={groups}
-              handleCompleteTask={handleCompleteGroupTask}
-              handleDeleteTask={handleDeleteGroupTask}
+              handleCompleteGroupTask={handleCompleteGroupTask}
+              handleDeleteGroupTask={handleDeleteGroupTask}
+              handleUndoGroupTask={handleUndoGroupTask}
+              handleEditGroupTask={handleEditGroupTask}
+              handleCompleteGroup={handleCompleteGroup}
+              handleDeleteGroup={handleDeleteGroup}
               formatDate={formatDate}
-              onCompleteGroup={handleCompleteGroup}
-              onDeleteGroup={handleDeleteGroup}
+              isGuestMode={isGuestMode}
             />
-          )}
+          } />
+          <Route path="/shared-groups" element={
+            user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
+          } />
+          <Route path="/shared-group/:id" element={
+            user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
+          } />
+        </Routes>
 
-          {completed.length > 0 && (
-            <CompletedList completed={completed} handleDelete={handleDelete} handleUndo={handleUndo} formatDate={formatDate} />
-          )}
+        <LoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onLogin={handleLogin}
+          onSwitchToSignup={() => {
+            setShowLoginModal(false);
+            setShowSignupModal(true);
+          }}
+          onGuestMode={handleGuestMode}
+        />
 
-          {deleted.length > 0 && (
-            <DeletedList deleted={deleted} formatDate={formatDate} />
-          )}
+        <SignupModal
+          isOpen={showSignupModal}
+          onClose={() => setShowSignupModal(false)}
+          onSignup={handleSignup}
+          onSwitchToLogin={() => {
+            setShowSignupModal(false);
+            setShowLoginModal(true);
+          }}
+        />
 
-          <div className="mt-10 text-center text-gray-400 text-xs">Made by Avengers with ❤</div>
-        </div>
+        <GroupTaskModal
+          isOpen={showGroupTaskModal}
+          onClose={() => setShowGroupTaskModal(false)}
+          groups={groups}
+          formatDate={formatDate}
+          onCompleteGroup={handleCompleteGroup}
+          onDeleteGroup={handleDeleteGroup}
+          handleUndoGroupTask={handleUndoGroupTask}
+          handleEditGroupTask={handleEditGroupTask}
+          handleCompleteGroupTask={handleCompleteGroupTask}
+          handleDeleteGroupTask={handleDeleteGroupTask}
+        />
       </div>
-
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLogin={handleLogin}
-        onSwitchToSignup={() => {
-          setShowLoginModal(false);
-          setShowSignupModal(true);
-        }}
-        onGuestMode={handleGuestMode}
-      />
-
-      <SignupModal
-        isOpen={showSignupModal}
-        onClose={() => setShowSignupModal(false)}
-        onSignup={handleSignup}
-        onSwitchToLogin={() => {
-          setShowSignupModal(false);
-          setShowLoginModal(true);
-        }}
-      />
-
-      <GroupTaskModal
-        isOpen={showGroupTaskModal}
-        onClose={() => setShowGroupTaskModal(false)}
-        groups={groups}
-        formatDate={formatDate}
-        onCompleteGroup={handleCompleteGroup}
-        onDeleteGroup={handleDeleteGroup}
-      />
-    </div>
+    </Router>
   );
 }
 

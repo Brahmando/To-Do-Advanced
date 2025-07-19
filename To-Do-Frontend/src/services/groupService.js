@@ -81,3 +81,22 @@ export const deleteGroup = async (id) => {
     throw error;
   }
 };
+
+export const editGroupTask = async (taskId, data) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/groups/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error editing group task:', error);
+    throw error;
+  }
+};
