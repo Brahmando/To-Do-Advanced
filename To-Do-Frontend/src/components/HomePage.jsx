@@ -34,6 +34,22 @@ const HomePage = ({
 }) => {
   return (
     <div className="flex flex-col items-center py-10 px-2">
+      {/* Beta Banner */}
+      <div className="w-full max-w-2xl mb-4">
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-3 rounded-lg shadow-lg border border-yellow-300">
+          <div className="flex items-center justify-center space-x-2">
+            <span className="text-lg">🚀</span>
+            <div className="text-center">
+              <p className="font-bold text-sm">Welcome to To-Do App Beta!</p>
+              <p className="text-xs opacity-90">
+                You're testing our latest features. Found a bug? We'd love your feedback!
+              </p>
+            </div>
+            <span className="text-lg">🧪</span>
+          </div>
+        </div>
+      </div>
+
       <div className="w-full max-w-2xl bg-white/80 rounded-3xl shadow-2xl p-8 backdrop-blur-md border border-blue-100">
         <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400 mb-2 text-center drop-shadow-lg">
           Stunning To-Do App

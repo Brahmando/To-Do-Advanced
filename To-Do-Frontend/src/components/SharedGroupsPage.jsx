@@ -155,17 +155,17 @@ const SharedGroupsPage = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-blue-500 p-6 text-white rounded-2xl mb-8">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-r from-green-500 to-blue-500 p-4 sm:p-6 text-white rounded-2xl mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h1 className="text-3xl font-bold">Shared Groups</h1>
-              <p className="text-green-100 mt-2">Collaborate with others on shared tasks</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Shared Groups</h1>
+              <p className="text-green-100 mt-2 text-sm sm:text-base">Collaborate with others on shared tasks</p>
             </div>
             <Link
               to="/"
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition"
+              className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg transition text-xs sm:text-base"
             >
               ← Back to Home
             </Link>
@@ -173,8 +173,8 @@ const SharedGroupsPage = ({ user }) => {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
+        <div className="border-b border-gray-200 mb-4">
+          <nav className="flex flex-wrap gap-2 sm:gap-8">
             <button
               onClick={() => setActiveTab('my-groups')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -275,7 +275,7 @@ const SharedGroupsPage = ({ user }) => {
             {publicGroups.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Public Groups</h3>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {publicGroups.map(group => {
                     const alreadyJoined = group.members.some(member => member.user === user.id);
                     console.log(alreadyJoined)

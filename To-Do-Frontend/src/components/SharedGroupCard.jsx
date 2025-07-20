@@ -39,15 +39,15 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, already
   const completedTasks = group.tasks ? group.tasks.filter(task => task.completed && !task.deleted) : [];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
+    <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow w-full">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 sm:mb-3 gap-2">
+        <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-lg text-gray-800">{group.name}</h3>
           {group.description && (
             <p className="text-sm text-gray-600 mt-1">{group.description}</p>
           )}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
           {isPublic ? (
             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
               Public
@@ -65,8 +65,8 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, already
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
-        <div className="flex justify-between text-sm">
+      <div className="space-y-2 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row justify-between text-sm gap-1">
           <span className="text-gray-600">Owner:</span>
           <span>{group.ownerName}</span>
         </div>

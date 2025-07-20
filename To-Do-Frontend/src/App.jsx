@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Navbar from './components/Navbar';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
@@ -7,6 +8,8 @@ import CompletedList from './components/CompletedList';
 import DeletedList from './components/DeletedList';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
+import ProfileModal from './components/ProfileModal';
+import OTPVerificationModal from './components/OTPVerificationModal';
 import { getTasks, createTask, completeTask, deleteTask, undoTask } from './services/taskService';
 import { getGroups, createGroup, completeGroup, deleteGroup, editGroupTask } from './services/groupService';
 import { getNotifications } from './services/sharedGroupService';
@@ -16,6 +19,37 @@ import SharedGroupsPage from './components/SharedGroupsPage';
 import SharedGroupDetail from './components/SharedGroupDetail';
 import HomePage from './components/HomePage';
 import NotificationBell from './components/NotificationBell';
+
+// Google OAuth Client ID (you'll need to get this from Google Console)
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
+
+// Safe localStorage operations
+const safeLocalStorage = {
+  getItem: (key, defaultValue = null) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error);
+      localStorage.removeItem(key); // Remove corrupted data
+      return defaultValue;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error writing to localStorage key "${key}":`, error);
+    }
+  },
+  removeItem: (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Error removing localStorage key "${key}":`, error);
+    }
+  }
+};
 
 function formatDate(date) {
   return new Date(date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -31,6 +65,9 @@ function App() {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpUserData, setOtpUserData] = useState(null);
   const [pendingTask, setPendingTask] = useState(null);
   const [isGroupTaskMode, setIsGroupTaskMode] = useState(false);
   const [groupName, setGroupName] = useState('');
@@ -44,7 +81,13 @@ function App() {
     const guestMode = localStorage.getItem('guestMode');
 
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user'); // Remove corrupted data
+      }
     } else if (guestMode) {
       setIsGuestMode(true);
       loadGuestTasks();
@@ -71,14 +114,14 @@ function App() {
   }, [user]);
 
   const loadGuestTasks = () => {
-    const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
+    const guestTasks = safeLocalStorage.getItem('guestTasks', []);
     setTasks(guestTasks.filter(task => !task.completed && !task.deleted));
     setCompleted(guestTasks.filter(task => task.completed && !task.deleted));
     setDeleted(guestTasks.filter(task => task.deleted).slice(-3));
   };
 
   const saveGuestTasks = (allTasks) => {
-    localStorage.setItem('guestTasks', JSON.stringify(allTasks));
+    safeLocalStorage.setItem('guestTasks', allTasks);
   };
 
   const handleAdd = async () => {
@@ -101,7 +144,7 @@ function App() {
     if (isGroupTaskMode) {
       try {
         if (isGuestMode) {
-          const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+          const guestGroups = safeLocalStorage.getItem('guestGroups', []);
           let existingGroup = guestGroups.find(g => g.name === groupName);
 
           const newTask = {
@@ -126,7 +169,7 @@ function App() {
             guestGroups.push(existingGroup);
           }
 
-          localStorage.setItem('guestGroups', JSON.stringify(guestGroups));
+          safeLocalStorage.setItem('guestGroups', guestGroups);
           setGroups(guestGroups);
         } else {
           await createGroup({ name: groupName, taskText: input, taskDate: date });
@@ -436,6 +479,31 @@ function App() {
     localStorage.removeItem('guestTasks');
   };
 
+  const handleShowOTPModal = (otpData) => {
+    setOtpUserData(otpData);
+    setShowOTPModal(true);
+  };
+
+  const handleOTPVerification = (userData) => {
+    setUser(userData);
+    setIsGuestMode(false);
+    setShowOTPModal(false);
+    setOtpUserData(null);
+    localStorage.removeItem('guestMode');
+    localStorage.removeItem('guestTasks');
+    
+    if (pendingTask) {
+      createTask(pendingTask)
+        .then(() => {
+          setPendingTask(null);
+          fetchTasks();
+        })
+        .catch(error => {
+          console.log('Error creating pending task:', error);
+        });
+    }
+  };
+
   const handleGuestMode = () => {
     setIsGuestMode(true);
     localStorage.setItem('guestMode', 'true');
@@ -477,19 +545,30 @@ function App() {
     localStorage.removeItem('guestGroups');
   };
 
+  const handleProfileClick = () => {
+    setShowProfileModal(true);
+  };
+
+  const handleUpdateProfile = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
-        <Navbar 
-          user={user}
-          isGuestMode={isGuestMode}
-          onLoginClick={() => setShowLoginModal(true)}
-          onSignupClick={() => setShowSignupModal(true)}
-          onLogout={handleLogout}
-          onGroupTaskClick={() => setShowGroupTaskModal(true)}
-          notifications={notifications}
-          setNotifications={setNotifications}
-        />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
+          <Navbar 
+            user={user}
+            isGuestMode={isGuestMode}
+            onLoginClick={() => setShowLoginModal(true)}
+            onSignupClick={() => setShowSignupModal(true)}
+            onLogout={handleLogout}
+            onGroupTaskClick={() => setShowGroupTaskModal(true)}
+            onProfileClick={handleProfileClick}
+            notifications={notifications}
+            setNotifications={setNotifications}
+          />
 
         <Routes>
           <Route path="/" element={
@@ -537,6 +616,7 @@ function App() {
             setShowSignupModal(true);
           }}
           onGuestMode={handleGuestMode}
+          onShowOTPModal={handleShowOTPModal}
         />
 
         <SignupModal
@@ -547,6 +627,26 @@ function App() {
             setShowSignupModal(false);
             setShowLoginModal(true);
           }}
+          onShowOTPModal={handleShowOTPModal}
+        />
+
+        <OTPVerificationModal
+          isOpen={showOTPModal}
+          onClose={() => {
+            setShowOTPModal(false);
+            setOtpUserData(null);
+          }}
+          onVerify={handleOTPVerification}
+          userEmail={otpUserData?.email}
+          userName={otpUserData?.name}
+          userId={otpUserData?.userId}
+        />
+
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={user}
+          onUpdateProfile={handleUpdateProfile}
         />
 
         <GroupTaskModal
@@ -563,6 +663,7 @@ function App() {
         />
       </div>
     </Router>
+    </GoogleOAuthProvider>
   );
 }
 

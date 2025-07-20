@@ -147,7 +147,7 @@ const GroupTaskList = ({
                 {isVisible && (
                   <div className="space-y-3">
                     {/* Active Tasks */}
-                    {activeTasks.length > 0 && (
+                    {activeTasks.length > 0 && ( 
                       <div>
                         <h4 className="font-medium text-purple-700 mb-2">Active Tasks:</h4>
                         {activeTasks.map(task => (
@@ -213,7 +213,7 @@ const GroupTaskList = ({
                       <div>
                         <h4 className="font-medium text-green-700 mb-2">Completed Tasks:</h4>
                         {completedTasks.map(task => (
-                          <div key={task._id} className="bg-green-50 p-3 rounded border border-green-200 mb-2">
+                          <div key={task._id} className="bg-green-50 p-2 sm:p-3 rounded border border-green-200 mb-2">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-medium text-green-800 line-through">{task.text}</p>
