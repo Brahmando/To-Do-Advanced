@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProgressBar from './ProgressBar';
 
 
 const GroupTaskList = ({ 
@@ -87,6 +88,7 @@ const GroupTaskList = ({
           {groups.map(group => {
             const activeTasks = group.tasks?.filter(task => !task.completed && !task.deleted) || [];
             const completedTasks = group.tasks?.filter(task => task.completed && !task.deleted) || [];
+            const totalTasks = activeTasks.length + completedTasks.length;
             const allCompleted = activeTasks.length === 0 && completedTasks.length > 0;
             const isVisible = groupVisibility[group._id];
 
@@ -143,6 +145,18 @@ const GroupTaskList = ({
                     </button>
                   </div>
                 </div>
+
+                {/* Progress Bar */}
+                {totalTasks > 0 && (
+                  <div className="mb-3">
+                    <ProgressBar 
+                      completed={completedTasks.length} 
+                      total={totalTasks}
+                      showPercentage={true}
+                      className=""
+                    />
+                  </div>
+                )}
 
                 {isVisible && (
                   <div className="space-y-3">

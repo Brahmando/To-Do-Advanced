@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { joinSharedGroup } from '../services/sharedGroupService';
+import ProgressBar from './ProgressBar';
 
 const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, alreadyJoined }) => {
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -89,6 +90,16 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, already
           </span>
         </div>
       </div>
+      {/* Progress Bar */}
+      {(activeTasks.length + completedTasks.length) > 0 && (
+        <div className="mb-3">
+          <ProgressBar
+            completed={completedTasks.length}
+            total={activeTasks.length + completedTasks.length}
+            showPercentage={true}
+          />
+        </div>
+      )}
 
       <div className="text-xs text-gray-500 mb-3">
         Created: {formatDate(group.created)}

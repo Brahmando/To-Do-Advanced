@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  getSharedGroups, 
-  searchPublicGroups, 
-  createSharedGroup, 
-  joinSharedGroup
+import {
+  getSharedGroups,
+  searchPublicGroups,
+  createSharedGroup,
+  joinSharedGroup,
 } from '../services/sharedGroupService';
+import ProgressBar from './ProgressBar';
 import CreateSharedGroupModal from './CreateSharedGroupModal';
 import JoinGroupModal from './JoinGroupModal';
 import SharedGroupCard from './SharedGroupCard';

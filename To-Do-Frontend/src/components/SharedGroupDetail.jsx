@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import ProgressBar from './ProgressBar';
 import {
   DndContext,
   closestCenter,
@@ -704,6 +705,17 @@ const SharedGroupDetail = ({ user }) => {
               )}
             </div>
           </div>
+          
+          {/* Progress Bar */}
+          {(activeTasks.length + completedTasks.length) > 0 && (
+            <div className="mt-4">
+              <ProgressBar
+                completed={completedTasks.length}
+                total={activeTasks.length + completedTasks.length}
+                showPercentage={true}
+              />
+            </div>
+          )}
         </div>
 
         {/* Tasks */}
