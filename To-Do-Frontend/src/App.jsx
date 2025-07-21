@@ -19,6 +19,8 @@ import SharedGroupsPage from './components/SharedGroupsPage';
 import SharedGroupDetail from './components/SharedGroupDetail';
 import HomePage from './components/HomePage';
 import NotificationBell from './components/NotificationBell';
+import MyTasksPage from './components/MyTasksPage';
+import GroupTasksPage from './components/GroupTasksPage';
 
 // Google OAuth Client ID (you'll need to get this from Google Console)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
@@ -597,6 +599,43 @@ function App() {
               handleDeleteGroup={handleDeleteGroup}
               formatDate={formatDate}
               isGuestMode={isGuestMode}
+            />
+          } />
+          <Route path="/my-tasks" element={
+            <MyTasksPage
+              tasks={tasks}
+              completed={completed}
+              deleted={deleted}
+              input={input}
+              setInput={setInput}
+              date={date}
+              setDate={setDate}
+              handleAdd={handleAdd}
+              handleComplete={handleComplete}
+              handleDelete={handleDelete}
+              handleUndo={handleUndo}
+              formatDate={formatDate}
+              isGuestMode={isGuestMode}
+            />
+          } />
+          <Route path="/group-tasks" element={
+            <GroupTasksPage
+              groups={groups}
+              input={input}
+              setInput={setInput}
+              date={date}
+              setDate={setDate}
+              handleAdd={handleAdd}
+              handleCompleteGroupTask={handleCompleteGroupTask}
+              handleDeleteGroupTask={handleDeleteGroupTask}
+              handleUndoGroupTask={handleUndoGroupTask}
+              handleEditGroupTask={handleEditGroupTask}
+              handleCompleteGroup={handleCompleteGroup}
+              handleDeleteGroup={handleDeleteGroup}
+              formatDate={formatDate}
+              isGuestMode={isGuestMode}
+              groupName={groupName}
+              setGroupName={setGroupName}
             />
           } />
           <Route path="/shared-groups" element={

@@ -1,0 +1,82 @@
+/* Custom responsive navbar styles */
+
+/* Extra small devices (phones, less than 640px) */
+@media (max-width: 639px) {
+  .navbar-button {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+/* Small devices (landscape phones, 640px and up) */
+@media (min-width: 640px) and (max-width: 767px) {
+  .navbar-button {
+    font-size: 0.8125rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .navbar-button {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.875rem;
+  }
+}
+
+/* Large devices (desktops, 1024px and up) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .navbar-button {
+    font-size: 0.875rem;
+    padding: 0.625rem 1rem;
+  }
+}
+
+/* Extra large devices (large desktops, 1280px and up) */
+@media (min-width: 1280px) {
+  .navbar-button {
+    font-size: 0.9375rem;
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+/* Ensure smooth transitions for all viewport changes */
+.navbar-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Custom container width constraints for ultra-wide screens */
+@media (min-width: 1536px) {
+  .navbar-container {
+    max-width: 1536px;
+    margin: 0 auto;
+  }
+}
+
+/* Prevent text wrapping in buttons */
+.navbar-button-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive font sizes for navbar title */
+@media (max-width: 359px) {
+  .navbar-title {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 360px) and (max-width: 639px) {
+  .navbar-title {
+    font-size: 1rem;
+  }
+}
+
+/* Ensure proper spacing on very small screens */
+@media (max-width: 359px) {
+  .navbar-spacing {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}

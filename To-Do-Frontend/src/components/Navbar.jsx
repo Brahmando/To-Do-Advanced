@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import SearchBar from './SearchBar';
+import './Navbar.css';
 
 const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, message }) => {
   if (!isOpen) return null;
@@ -33,6 +34,7 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Close mobile menu when route changes
   useEffect(() => {
@@ -75,25 +77,33 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
   return (
     <>
       <nav className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 shadow-lg sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
           {/* Main Header */}
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo and Beta Badge */}
-            <div className="flex items-center space-x-3">
-              <Link to="/" className="text-white text-xl font-bold hover:text-gray-200 transition-colors flex items-center space-x-2" onClick={closeMobileMenu}>
-                <span className="text-2xl">📝</span>
-                <span className="hidden sm:block">To-Do App</span>
+            <div className="flex items-center min-w-0 flex-1">
+              <Link to="/" className="text-white font-bold hover:text-gray-200 transition-colors flex items-center min-w-0" onClick={closeMobileMenu}>
+                <span className="text-xl sm:text-2xl flex-shrink-0">📝</span>
+                <span className="ml-1 sm:ml-2 text-sm sm:text-base md:text-xl truncate">To-Do App</span>
               </Link>
-              <div className="flex items-center space-x-2">
-                <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full animate-pulse shadow-md">
+              <div className="flex items-center ml-2 sm:ml-3">
+                <span className="bg-yellow-400 text-yellow-900 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full animate-pulse shadow-md whitespace-nowrap">
                   ✨ BETA
                 </span>
-                <span className="text-white text-xs opacity-75 hidden sm:block font-medium">v2.0-beta</span>
+                <span className="text-white text-[10px] sm:text-xs opacity-75 hidden lg:block font-medium ml-1 sm:ml-2">v2.0-beta</span>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
+{/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
+              {user && (
+                <Link
+                  to="/my-tasks"
+                  className={`px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 whitespace-nowrap bg-blue-500 hover:bg-blue-600 text-white shadow-lg`}
+                >
+                  <span className="hidden xl:inline">🗒️ </span>My Tasks
+                </Link>
+              )}
               {user && (
                 <>
                   <NotificationBell
@@ -103,54 +113,54 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                   />
                   <Link
                     to="/shared-groups"
-                    className={`px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 ${
+                    className={`px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 whitespace-nowrap ${
                       location.pathname.startsWith('/shared-group') 
                         ? 'bg-green-600 text-white shadow-lg' 
                         : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-lg'
                     }`}
                   >
-                    🤝 Shared Groups
+                    <span className="hidden xl:inline">🤝 </span>Shared Groups
                   </Link>
-                  <button
-                    onClick={onGroupTaskClick}
-                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 hover:shadow-lg"
+                  <Link
+                    to="/group-tasks"
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    👥 Group Tasks
-                  </button>
-                  <span className="text-white hidden lg:block text-sm bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <span className="hidden xl:inline">👥 </span>Group Tasks
+                  </Link>
+                  <span className="text-white hidden xl:block text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm truncate max-w-[150px]">
                     👋 Welcome, {user.name}!
                   </span>
                   <button
                     onClick={onProfileClick}
-                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 hover:shadow-lg"
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    👤 Profile
+                    <span className="hidden xl:inline">👤 </span>Profile
                   </button>
                   <button
                     onClick={onLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                    className="bg-red-500 hover:bg-red-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    🚪 Logout
+                    <span className="hidden xl:inline">🚪 </span>Logout
                   </button>
                 </>
               )}
               
               {isGuestMode && !user && (
                 <>
-                  <button
-                    onClick={onGroupTaskClick}
-                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 hover:shadow-lg"
+                  <Link
+                    to="/group-tasks"
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    👥 Group Tasks
-                  </button>
-                  <span className="text-white hidden lg:block text-sm bg-yellow-500/30 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <span className="hidden xl:inline">👥 </span>Group Tasks
+                  </Link>
+                  <span className="text-white hidden lg:block text-xs bg-yellow-500/30 px-3 py-1 rounded-full backdrop-blur-sm whitespace-nowrap">
                     🔓 Guest Mode
                   </span>
                   <button
                     onClick={handleExitGuestClick}
-                    className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                    className="bg-amber-500 hover:bg-amber-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    🚪 Exit Guest
+                    <span className="hidden xl:inline">🚪 </span>Exit Guest
                   </button>
                 </>
               )}
@@ -159,22 +169,22 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                 <>
                   <button
                     onClick={onLoginClick}
-                    className="bg-white text-indigo-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 hover:shadow-lg"
+                    className="bg-white text-indigo-600 hover:bg-gray-100 px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    🔐 Login
+                    <span className="hidden lg:inline">🔐 </span>Login
                   </button>
                   <button
                     onClick={onSignupClick}
-                    className="bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium transform hover:scale-105 hover:shadow-lg"
+                    className="bg-indigo-800 hover:bg-indigo-900 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
                   >
-                    ✨ Sign Up
+                    <span className="hidden lg:inline">✨ </span>Sign Up
                   </button>
                 </>
               )}
             </div>
 
             {/* Mobile Hamburger Menu Button */}
-            <div className="md:hidden flex items-center space-x-3">
+            <div className="md:hidden flex items-center space-x-2 sm:space-x-3">
               {/* Mobile Notification Bell */}
               {user && (
                 <NotificationBell
@@ -185,9 +195,9 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
               )}
               <button
                 onClick={toggleMobileMenu}
-                className="hamburger-btn text-white hover:text-gray-200 focus:outline-none focus:text-gray-200 p-2 rounded-lg hover:bg-white/10 transition-all duration-200"
+                className="hamburger-btn text-white hover:text-gray-200 focus:outline-none focus:text-gray-200 p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-all duration-200"
               >
-                <svg className="h-6 w-6 transform transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6 transform transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   ) : (
@@ -201,14 +211,14 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
 
         {/* Mobile Search Bar - Always visible below navbar on mobile */}
         <div className="md:hidden border-t border-white/20 bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-600">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="w-full px-3 sm:px-4 py-2 sm:py-3">
             <SearchBar user={user} isGuestMode={isGuestMode} />
           </div>
         </div>
 
         {/* Desktop Search Bar */}
         <div className="hidden md:block border-t border-white/20 bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-600">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="w-full px-4 md:px-6 lg:px-8 py-2 md:py-3">
             <SearchBar user={user} isGuestMode={isGuestMode} />
           </div>
         </div>
@@ -218,7 +228,7 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
       {isMobileMenuOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 md:hidden">
           <div 
-            className={`mobile-menu fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-indigo-600 via-purple-600 to-cyan-500 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+            className={`mobile-menu fixed left-0 top-0 h-full w-72 sm:w-80 bg-gradient-to-b from-indigo-600 via-purple-600 to-cyan-500 shadow-2xl transform transition-transform duration-300 ease-in-out ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
@@ -253,14 +263,16 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                     </span>
                   </div>
                   
-                  <Link
-                    to="/"
-                    className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 transform hover:scale-105"
-                    onClick={closeMobileMenu}
-                  >
-                    <span className="text-xl">📋</span>
-                    <span className="font-medium">My Tasks</span>
-                  </Link>
+                  {user && (
+                    <Link
+                      to="/my-tasks"
+                      className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 transform hover:scale-105"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="text-xl">📋</span>
+                      <span className="font-medium">My Tasks</span>
+                    </Link>
+                  )}
                   
                   <Link
                     to="/shared-groups"
@@ -275,16 +287,14 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                     <span className="font-medium">Shared Groups</span>
                   </Link>
                   
-                  <button
-                    onClick={() => {
-                      onGroupTaskClick();
-                      closeMobileMenu();
-                    }}
+                  <Link
+                    to="/group-tasks"
                     className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 w-full text-left transform hover:scale-105"
+                    onClick={closeMobileMenu}
                   >
                     <span className="text-xl">👥</span>
                     <span className="font-medium">Group Tasks</span>
-                  </button>
+                  </Link>
                   
                   <button
                     onClick={() => {
@@ -323,25 +333,25 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                     </span>
                   </div>
                   
-                  <Link
-                    to="/"
-                    className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 transform hover:scale-105"
-                    onClick={closeMobileMenu}
-                  >
-                    <span className="text-xl">📋</span>
-                    <span className="font-medium">My Tasks</span>
-                  </Link>
+                  {user && (
+                    <Link
+                      to="/my-tasks"
+                      className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 transform hover:scale-105"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="text-xl">📋</span>
+                      <span className="font-medium">My Tasks</span>
+                    </Link>
+                  )}
                   
-                  <button
-                    onClick={() => {
-                      onGroupTaskClick();
-                      closeMobileMenu();
-                    }}
+                  <Link
+                    to="/group-tasks"
                     className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 w-full text-left transform hover:scale-105"
+                    onClick={closeMobileMenu}
                   >
                     <span className="text-xl">👥</span>
                     <span className="font-medium">Group Tasks</span>
-                  </button>
+                  </Link>
                   
                   <div className="border-t border-white/20 pt-4 mt-6">
                     <button
