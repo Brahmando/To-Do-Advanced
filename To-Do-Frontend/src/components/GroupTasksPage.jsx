@@ -135,6 +135,7 @@ const GroupTasksPage = ({
                 onCompleteGroup={handleCompleteGroup}
                 onDeleteGroup={handleDeleteGroup}
                 showShareButton={false}
+                showMainDropdown={false}
               />
             </div>
           ) : (
@@ -153,41 +154,6 @@ const GroupTasksPage = ({
             </div>
           )}
         </div>
-
-        {/* Quick Stats Cards for Individual Groups */}
-        {groups.length > 0 && (
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.map(group => {
-              const groupTasks = group.tasks?.filter(task => !task.deleted) || [];
-              const groupCompletedTasks = groupTasks.filter(task => task.completed);
-              const completionRate = groupTasks.length > 0 ? Math.round((groupCompletedTasks.length / groupTasks.length) * 100) : 0;
-              
-              return (
-                <div key={group._id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800 truncate">{group.name}</h3>
-                    {group.completed && (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                        ✅ Completed
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-600 mb-3">
-                    {groupTasks.length} tasks • {completionRate}% complete
-                  </div>
-                  {groupTasks.length > 0 && (
-                    <ProgressBar 
-                      completed={groupCompletedTasks.length} 
-                      total={groupTasks.length} 
-                      height="h-2" 
-                      showPercentage={false}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

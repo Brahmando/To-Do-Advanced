@@ -81,6 +81,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
               handleEditTask={handleEditGroupTask}
               showShareButton={true}
               onShareGroup={openShareModal}
+              showMainDropdown={false}
             />
           )}
         </div>

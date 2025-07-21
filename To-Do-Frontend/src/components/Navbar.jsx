@@ -33,6 +33,7 @@ const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, message }) => {
 const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, onProfileClick, isGuestMode, notifications, setNotifications }) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -47,11 +48,14 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
       if (isMobileMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-btn')) {
         setIsMobileMenuOpen(false);
       }
+      if (showAccountDropdown && !event.target.closest('.account-dropdown') && !event.target.closest('.account-button')) {
+        setShowAccountDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, showAccountDropdown]);
   
   const handleExitGuestClick = () => {
     setShowExitConfirm(true);
@@ -94,7 +98,7 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
               </div>
             </div>
 
-{/* Desktop Navigation */}
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
               {user && (
                 <Link
@@ -106,11 +110,6 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
               )}
               {user && (
                 <>
-                  <NotificationBell
-                    notifications={notifications}
-                    setNotifications={setNotifications}
-                    user={user}
-                  />
                   <Link
                     to="/shared-groups"
                     className={`px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 whitespace-nowrap ${
@@ -127,25 +126,60 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                   >
                     <span className="hidden xl:inline">👥 </span>Group Tasks
                   </Link>
-                  <span className="text-white hidden xl:block text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm truncate max-w-[150px]">
-                    👋 Welcome, {user.name}!
-                  </span>
-                  <button
-                    onClick={onProfileClick}
-                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
-                  >
-                    <span className="hidden xl:inline">👤 </span>Profile
-                  </button>
-                  <button
-                    onClick={onLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
-                  >
-                    <span className="hidden xl:inline">🚪 </span>Logout
-                  </button>
+                  
+                  {/* Notification Bell with left margin to separate from task buttons */}
+                  <div className="ml-4 lg:ml-6">
+                    <NotificationBell
+                      notifications={notifications}
+                      setNotifications={setNotifications}
+                      user={user}
+                    />
+                  </div>
+                  
+                  {/* Account Dropdown */}
+                  <div className="relative">
+                    <button
+                      onMouseEnter={() => setShowAccountDropdown(true)}
+                      className="account-button bg-indigo-500 hover:bg-indigo-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap flex items-center space-x-1"
+                    >
+                      <span className="hidden xl:inline">😊</span>
+                      <span>Account</span>
+                      <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {showAccountDropdown && (
+                      <div 
+                        className="account-dropdown absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
+                        onMouseEnter={() => setShowAccountDropdown(true)}
+                        onMouseLeave={() => setShowAccountDropdown(false)}
+                      >
+                        <button
+                          onClick={() => {
+                            onProfileClick();
+                            setShowAccountDropdown(false);
+                          }}
+                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <span className="text-base">👤</span>
+                          <span>Profile</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            onLogout();
+                            setShowAccountDropdown(false);
+                          }}
+                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <span className="text-base">🚪</span>
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </>
-              )}
-              
-              {isGuestMode && !user && (
+              )}              {isGuestMode && !user && (
                 <>
                   <Link
                     to="/group-tasks"

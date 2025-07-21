@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProgressBar from './ProgressBar';
 
 
 const GroupTaskList = ({ 
@@ -11,7 +12,8 @@ const GroupTaskList = ({
   handleUndoTask,
   handleEditTask,
   showShareButton = false,
-  onShareGroup
+  onShareGroup,
+  showMainDropdown = true
 }) => {
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskData, setEditTaskData] = useState({ text: '', date: '' });
@@ -19,9 +21,10 @@ const GroupTaskList = ({
   const [groupSectionView, setGroupSectionView] = useState(false);
 
     useEffect(() => {
-      // Ensure that the dropdown starts closed
-      setGroupSectionView(false); 
-    }, []);
+      // If showMainDropdown is false, always show the content (set to true)
+      // If showMainDropdown is true, start with dropdown closed (set to false)
+      setGroupSectionView(!showMainDropdown); 
+    }, [showMainDropdown]);
 
     const toggleGroupSectionView = () => {
       setGroupSectionView(prev => !prev);
@@ -75,13 +78,18 @@ const GroupTaskList = ({
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-semibold text-purple-600 mb-4 flex justify-between items-center" onClick={toggleGroupSectionView}>
+      <h2 
+        className={`text-2xl font-semibold text-purple-600 mb-4 flex justify-between items-center ${showMainDropdown ? 'cursor-pointer' : ''}`} 
+        onClick={showMainDropdown ? toggleGroupSectionView : undefined}
+      >
         Group Tasks ({groups.length})
-      <button className="text-gray-500">
-        {groupSectionView ? '▼' : '▲'}
-      </button>
+        {showMainDropdown && (
+          <button className="text-gray-500">
+            {groupSectionView ? '▼' : '▲'}
+          </button>
+        )}
       </h2>
-      {groupSectionView &&<div className="max-h-80 overflow-y-auto overflow-x-hidden">
+      {(showMainDropdown ? groupSectionView : true) && <div className="max-h-80 overflow-y-auto overflow-x-hidden">
         {groups.length === 0 && <div className="text-gray-400 text-center mb-4">No group tasks</div>}
         <div className="space-y-4">
           {groups.map(group => {
@@ -143,6 +151,18 @@ const GroupTaskList = ({
                     </button>
                   </div>
                 </div>
+
+                {/* Progress Bar for each group */}
+                {(activeTasks.length + completedTasks.length) > 0 && (
+                  <div className="mb-3">
+                    <ProgressBar
+                      completed={completedTasks.length}
+                      total={activeTasks.length + completedTasks.length}
+                      showPercentage={true}
+                      height="h-2"
+                    />
+                  </div>
+                )}
 
                 {isVisible && (
                   <div className="space-y-3">

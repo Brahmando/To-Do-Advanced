@@ -21,6 +21,7 @@ import HomePage from './components/HomePage';
 import NotificationBell from './components/NotificationBell';
 import MyTasksPage from './components/MyTasksPage';
 import GroupTasksPage from './components/GroupTasksPage';
+import FeedbackPage from './components/FeedbackPage';
 
 // Google OAuth Client ID (you'll need to get this from Google Console)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
@@ -575,6 +576,7 @@ function App() {
         <Routes>
           <Route path="/" element={
             <HomePage
+              user={user}
               tasks={tasks}
               completed={completed}
               deleted={deleted}
@@ -643,6 +645,9 @@ function App() {
           } />
           <Route path="/shared-group/:id" element={
             user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
+          } />
+          <Route path="/feedback" element={
+            <FeedbackPage user={user} />
           } />
         </Routes>
 

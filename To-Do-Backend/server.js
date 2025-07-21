@@ -6,6 +6,7 @@ const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
 const sharedGroupRoutes = require('./routes/sharedGroups');
+const feedbackRoutes = require('./routes/feedback');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/shared-groups', sharedGroupRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // MongoDB Connection
 mongoose.connect(mongoUri)

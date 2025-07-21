@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ProfileModal = ({ isOpen, onClose, user, onUpdateProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -12,6 +12,23 @@ const ProfileModal = ({ isOpen, onClose, user, onUpdateProfile }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Update formData whenever user prop changes or modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      // Reset states when modal opens
+      setIsEditing(false);
+      setError('');
+      setSuccess('');
+    }
+  }, [isOpen, user]);
 
   const handleInputChange = (e) => {
     setFormData({
