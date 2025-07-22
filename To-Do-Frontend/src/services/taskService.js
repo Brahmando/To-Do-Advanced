@@ -2,6 +2,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
+  console.log('Token being sent:', token ? 'Token exists' : 'No token found');
   return { 
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })

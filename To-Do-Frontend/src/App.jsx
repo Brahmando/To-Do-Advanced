@@ -201,10 +201,15 @@ function App() {
         setTasks(prev => [...prev, newTask]);
       } else {
         try {
-          await createTask({ text: input, date });
+          console.log('Creating task for logged-in user:', { text: input, date });
+          console.log('Current user state:', user);
+          console.log('Token in localStorage:', localStorage.getItem('token'));
+          const result = await createTask({ text: input, date });
+          console.log('Task created successfully:', result);
           fetchTasks();
         } catch (error) {
-          console.log('Error creating task:', error);
+          console.error('Error creating task:', error);
+          alert('Failed to create task. Please check your connection and try again.');
         }
       }
       setInput('');
@@ -215,8 +220,8 @@ function App() {
   const handleComplete = (id) => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, completed: true, completedAt: new Date().toISOString() }
           : task
       );
@@ -236,8 +241,8 @@ function App() {
   const handleDelete = (id, from = 'tasks') => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, deleted: true, deletedAt: new Date().toISOString() }
           : task
       );
@@ -268,8 +273,8 @@ function App() {
   const handleUndo = (id) => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, completed: false, completedAt: null }
           : task
       );
@@ -320,7 +325,7 @@ function App() {
     try {
       if (isGuestMode) {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
-        const updatedGroups = guestGroups.map(group => 
+        const updatedGroups = guestGroups.map(group =>
           group._id === groupId ? { ...group, completed: true } : group
         );
         localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
@@ -358,8 +363,8 @@ function App() {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
         const updatedGroups = guestGroups.map(group => ({
           ...group,
-          tasks: group.tasks.map(task => 
-            task._id === taskId 
+          tasks: group.tasks.map(task =>
+            task._id === taskId
               ? { ...task, completed: true, completedAt: new Date().toISOString() }
               : task
           )
@@ -382,8 +387,8 @@ function App() {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
         const updatedGroups = guestGroups.map(group => ({
           ...group,
-          tasks: group.tasks.map(task => 
-            task._id === taskId 
+          tasks: group.tasks.map(task =>
+            task._id === taskId
               ? { ...task, deleted: true, deletedAt: new Date().toISOString() }
               : task
           )
@@ -494,7 +499,7 @@ function App() {
     setOtpUserData(null);
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestTasks');
-    
+
     if (pendingTask) {
       createTask(pendingTask)
         .then(() => {
@@ -546,6 +551,9 @@ function App() {
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestTasks');
     localStorage.removeItem('guestGroups');
+
+    // Navigate to home page after logout/exit guest mode
+    window.location.href = '/';
   };
 
   const handleProfileClick = () => {
@@ -561,7 +569,7 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
-          <Navbar 
+          <Navbar
             user={user}
             isGuestMode={isGuestMode}
             onLoginClick={() => setShowLoginModal(true)}
@@ -573,140 +581,140 @@ function App() {
             setNotifications={setNotifications}
           />
 
-        <Routes>
-          <Route path="/" element={
-            <HomePage
-              user={user}
-              tasks={tasks}
-              completed={completed}
-              deleted={deleted}
-              input={input}
-              setInput={setInput}
-              date={date}
-              setDate={setDate}
-              handleAdd={handleAdd}
-              handleComplete={handleComplete}
-              handleDelete={handleDelete}
-              handleUndo={handleUndo}
-              isGroupTaskMode={isGroupTaskMode}
-              setIsGroupTaskMode={setIsGroupTaskMode}
-              groupName={groupName}
-              setGroupName={setGroupName}
-              groups={groups}
-              handleCompleteGroupTask={handleCompleteGroupTask}
-              handleDeleteGroupTask={handleDeleteGroupTask}
-              handleUndoGroupTask={handleUndoGroupTask}
-              handleEditGroupTask={handleEditGroupTask}
-              handleCompleteGroup={handleCompleteGroup}
-              handleDeleteGroup={handleDeleteGroup}
-              formatDate={formatDate}
-              isGuestMode={isGuestMode}
-            />
-          } />
-          <Route path="/my-tasks" element={
-            <MyTasksPage
-              tasks={tasks}
-              completed={completed}
-              deleted={deleted}
-              input={input}
-              setInput={setInput}
-              date={date}
-              setDate={setDate}
-              handleAdd={handleAdd}
-              handleComplete={handleComplete}
-              handleDelete={handleDelete}
-              handleUndo={handleUndo}
-              formatDate={formatDate}
-              isGuestMode={isGuestMode}
-            />
-          } />
-          <Route path="/group-tasks" element={
-            <GroupTasksPage
-              groups={groups}
-              input={input}
-              setInput={setInput}
-              date={date}
-              setDate={setDate}
-              handleAdd={handleAdd}
-              handleCompleteGroupTask={handleCompleteGroupTask}
-              handleDeleteGroupTask={handleDeleteGroupTask}
-              handleUndoGroupTask={handleUndoGroupTask}
-              handleEditGroupTask={handleEditGroupTask}
-              handleCompleteGroup={handleCompleteGroup}
-              handleDeleteGroup={handleDeleteGroup}
-              formatDate={formatDate}
-              isGuestMode={isGuestMode}
-              groupName={groupName}
-              setGroupName={setGroupName}
-            />
-          } />
-          <Route path="/shared-groups" element={
-            user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
-          } />
-          <Route path="/shared-group/:id" element={
-            user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
-          } />
-          <Route path="/feedback" element={
-            <FeedbackPage user={user} />
-          } />
-        </Routes>
+          <Routes>
+            <Route path="/" element={
+              <HomePage
+                user={user}
+                tasks={tasks}
+                completed={completed}
+                deleted={deleted}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleComplete={handleComplete}
+                handleDelete={handleDelete}
+                handleUndo={handleUndo}
+                isGroupTaskMode={isGroupTaskMode}
+                setIsGroupTaskMode={setIsGroupTaskMode}
+                groupName={groupName}
+                setGroupName={setGroupName}
+                groups={groups}
+                handleCompleteGroupTask={handleCompleteGroupTask}
+                handleDeleteGroupTask={handleDeleteGroupTask}
+                handleUndoGroupTask={handleUndoGroupTask}
+                handleEditGroupTask={handleEditGroupTask}
+                handleCompleteGroup={handleCompleteGroup}
+                handleDeleteGroup={handleDeleteGroup}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+              />
+            } />
+            <Route path="/my-tasks" element={
+              <MyTasksPage
+                tasks={tasks}
+                completed={completed}
+                deleted={deleted}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleComplete={handleComplete}
+                handleDelete={handleDelete}
+                handleUndo={handleUndo}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+              />
+            } />
+            <Route path="/group-tasks" element={
+              <GroupTasksPage
+                groups={groups}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleCompleteGroupTask={handleCompleteGroupTask}
+                handleDeleteGroupTask={handleDeleteGroupTask}
+                handleUndoGroupTask={handleUndoGroupTask}
+                handleEditGroupTask={handleEditGroupTask}
+                handleCompleteGroup={handleCompleteGroup}
+                handleDeleteGroup={handleDeleteGroup}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+                groupName={groupName}
+                setGroupName={setGroupName}
+              />
+            } />
+            <Route path="/shared-groups" element={
+              user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
+            } />
+            <Route path="/shared-group/:id" element={
+              user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
+            } />
+            <Route path="/feedback" element={
+              <FeedbackPage user={user} />
+            } />
+          </Routes>
 
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          onLogin={handleLogin}
-          onSwitchToSignup={() => {
-            setShowLoginModal(false);
-            setShowSignupModal(true);
-          }}
-          onGuestMode={handleGuestMode}
-          onShowOTPModal={handleShowOTPModal}
-        />
+          <LoginModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLogin={handleLogin}
+            onSwitchToSignup={() => {
+              setShowLoginModal(false);
+              setShowSignupModal(true);
+            }}
+            onGuestMode={handleGuestMode}
+            onShowOTPModal={handleShowOTPModal}
+          />
 
-        <SignupModal
-          isOpen={showSignupModal}
-          onClose={() => setShowSignupModal(false)}
-          onSignup={handleSignup}
-          onSwitchToLogin={() => {
-            setShowSignupModal(false);
-            setShowLoginModal(true);
-          }}
-          onShowOTPModal={handleShowOTPModal}
-        />
+          <SignupModal
+            isOpen={showSignupModal}
+            onClose={() => setShowSignupModal(false)}
+            onSignup={handleSignup}
+            onSwitchToLogin={() => {
+              setShowSignupModal(false);
+              setShowLoginModal(true);
+            }}
+            onShowOTPModal={handleShowOTPModal}
+          />
 
-        <OTPVerificationModal
-          isOpen={showOTPModal}
-          onClose={() => {
-            setShowOTPModal(false);
-            setOtpUserData(null);
-          }}
-          onVerify={handleOTPVerification}
-          userEmail={otpUserData?.email}
-          userName={otpUserData?.name}
-          userId={otpUserData?.userId}
-        />
+          <OTPVerificationModal
+            isOpen={showOTPModal}
+            onClose={() => {
+              setShowOTPModal(false);
+              setOtpUserData(null);
+            }}
+            onVerify={handleOTPVerification}
+            userEmail={otpUserData?.email}
+            userName={otpUserData?.name}
+            userId={otpUserData?.userId}
+          />
 
-        <ProfileModal
-          isOpen={showProfileModal}
-          onClose={() => setShowProfileModal(false)}
-          user={user}
-          onUpdateProfile={handleUpdateProfile}
-        />
+          <ProfileModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            user={user}
+            onUpdateProfile={handleUpdateProfile}
+          />
 
-        <GroupTaskModal
-          isOpen={showGroupTaskModal}
-          onClose={() => setShowGroupTaskModal(false)}
-          groups={groups}
-          formatDate={formatDate}
-          onCompleteGroup={handleCompleteGroup}
-          onDeleteGroup={handleDeleteGroup}
-          handleUndoGroupTask={handleUndoGroupTask}
-          handleEditGroupTask={handleEditGroupTask}
-          handleCompleteGroupTask={handleCompleteGroupTask}
-          handleDeleteGroupTask={handleDeleteGroupTask}
-        />
-      </div>
-    </Router>
+          <GroupTaskModal
+            isOpen={showGroupTaskModal}
+            onClose={() => setShowGroupTaskModal(false)}
+            groups={groups}
+            formatDate={formatDate}
+            onCompleteGroup={handleCompleteGroup}
+            onDeleteGroup={handleDeleteGroup}
+            handleUndoGroupTask={handleUndoGroupTask}
+            handleEditGroupTask={handleEditGroupTask}
+            handleCompleteGroupTask={handleCompleteGroupTask}
+            handleDeleteGroupTask={handleDeleteGroupTask}
+          />
+        </div>
+      </Router>
     </GoogleOAuthProvider>
   );
 }

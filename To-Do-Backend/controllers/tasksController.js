@@ -1,35 +1,18 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-
-// Middleware to get user from token (optional for guest mode)
-const getUser = async (req) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) return null;
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    return await User.findById(decoded.userId);
-  } catch (error) {
-    return null;
-  }
-};
 
 // Get all tasks
 exports.getTasks = async (req, res) => {
   try {
-    const user = await getUser(req);
-    let tasks;
-
-    if (user) {
+    // Use user data from auth middleware
+    if (req.user && req.user.userId) {
       // For logged-in users, get tasks by user ID
-      tasks = await Task.find({ user: user._id });
+      const tasks = await Task.find({ user: req.user.userId });
+      res.json(tasks);
     } else {
       // For guest users, return empty array (client will handle localStorage)
-      tasks = [];
+      res.json([]);
     }
-
-    res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -39,12 +22,11 @@ exports.getTasks = async (req, res) => {
 exports.createTask = async (req, res) => {
   try {
     const { text, date, groupId } = req.body;
-    const user = await getUser(req);
 
     const task = new Task({
       text,
       date,
-      user: user ? user._id : null,
+      user: req.user && req.user.userId ? req.user.userId : null,
       group: groupId || null
     });
 
@@ -68,7 +50,6 @@ exports.createTask = async (req, res) => {
 exports.completeTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await getUser(req);
 
     const task = await Task.findByIdAndUpdate(
       id,
@@ -84,8 +65,8 @@ exports.completeTask = async (req, res) => {
     }
 
     // If user is logged in, move task from activeTasks to completedTasks
-    if (user) {
-      await User.findByIdAndUpdate(user._id, {
+    if (req.user && req.user.userId) {
+      await User.findByIdAndUpdate(req.user.userId, {
         $pull: { activeTasks: id },
         $push: { completedTasks: id }
       });
@@ -101,7 +82,6 @@ exports.completeTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await getUser(req);
 
     const task = await Task.findByIdAndUpdate(
       id,
@@ -117,8 +97,8 @@ exports.deleteTask = async (req, res) => {
     }
 
     // If user is logged in, move task to deletedTasks array
-    if (user) {
-      await User.findByIdAndUpdate(user._id, {
+    if (req.user && req.user.userId) {
+      await User.findByIdAndUpdate(req.user.userId, {
         $pull: { activeTasks: id, completedTasks: id },
         $push: { deletedTasks: id }
       });
@@ -134,7 +114,6 @@ exports.deleteTask = async (req, res) => {
 exports.undoTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await getUser(req);
 
     const task = await Task.findByIdAndUpdate(
       id,
@@ -150,8 +129,8 @@ exports.undoTask = async (req, res) => {
     }
 
     // If user is logged in, move task from completedTasks to activeTasks
-    if (user) {
-      await User.findByIdAndUpdate(user._id, {
+    if (req.user && req.user.userId) {
+      await User.findByIdAndUpdate(req.user.userId, {
         $pull: { completedTasks: id },
         $push: { activeTasks: id }
       });

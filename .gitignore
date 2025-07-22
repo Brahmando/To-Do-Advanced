@@ -3,3 +3,6 @@ node_modules
 .replit
 attached_assets
 .env
+.vscode
+.idea
+.DS_Store   
