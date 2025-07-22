@@ -90,16 +90,20 @@ const SharedGroupCard = ({ group, userRole, isPublic = false, onRefresh, already
           </span>
         </div>
       </div>
-      {/* Progress Bar */}
-      {(activeTasks.length + completedTasks.length) > 0 && (
-        <div className="mb-3">
+      {/* Progress Bar - Always reserve space for consistent layout */}
+      <div className="mb-3 h-6 flex items-center">
+        {(activeTasks.length + completedTasks.length) > 0 ? (
           <ProgressBar
             completed={completedTasks.length}
             total={activeTasks.length + completedTasks.length}
             showPercentage={true}
           />
-        </div>
-      )}
+        ) : (
+          <div className="w-full text-center text-xs text-gray-400">
+            No tasks yet
+          </div>
+        )}
+      </div>
 
       <div className="text-xs text-gray-500 mb-3">
         Created: {formatDate(group.created)}

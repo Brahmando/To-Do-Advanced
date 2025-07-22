@@ -35,6 +35,120 @@ import {
     removeMember
 } from '../services/sharedGroupService';
 
+// Mobile Group Action Menu Component - Only visible on mobile
+const MobileGroupActionMenu = ({ canDelete, canEdit, onDeleteGroup, onExitGroup, onChangeLog, onAddTask }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen);
+    };
+
+    return (
+        <div className="md:hidden fixed right-4 bottom-6 z-50">
+            {/* Dropdown Menu */}
+            {isOpen && (
+                <div className="absolute bottom-16 right-0 flex flex-col space-y-2 mb-2">
+                    {/* Delete Group Button */}
+                    {canDelete() && (
+                        <div className="relative group">
+                            <button
+                                onClick={() => {
+                                    onDeleteGroup();
+                                    setIsOpen(false);
+                                }}
+                                className="w-11 h-11 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center transform hover:scale-105"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                            <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-red-600 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                Delete
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Exit Group Button */}
+                    <div className="relative group">
+                        <button
+                            onClick={() => {
+                                onExitGroup();
+                                setIsOpen(false);
+                            }}
+                            className="w-11 h-11 bg-orange-500 hover:bg-orange-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center transform hover:scale-105"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                        <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-orange-600 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                            Exit
+                        </div>
+                    </div>
+
+                    {/* Change Log Button */}
+                    <div className="relative group">
+                        <button
+                            onClick={() => {
+                                onChangeLog();
+                                setIsOpen(false);
+                            }}
+                            className="w-11 h-11 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center transform hover:scale-105"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </button>
+                        <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                            Log
+                        </div>
+                    </div>
+
+                    {/* Add Task Button */}
+                    {canEdit() && (
+                        <div className="relative group">
+                            <button
+                                onClick={() => {
+                                    onAddTask();
+                                    setIsOpen(false);
+                                }}
+                                className="w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center transform hover:scale-105"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </button>
+                            <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                Add
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Main Toggle Button - Different style from SharedGroupsPage */}
+            <button
+                onClick={toggleMenu}
+                className={`w-12 h-12 rounded-lg shadow-xl transition-all duration-300 flex items-center justify-center transform ${
+                    isOpen 
+                        ? 'bg-gray-700 opacity-50 scale-95' 
+                        : 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-80 hover:opacity-95 hover:scale-105'
+                }`}
+            >
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`h-5 w-5 text-white transition-transform duration-300 ${isOpen ? 'rotate-45' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+            </button>
+        </div>
+    );
+};
+
 const SharedGroupDetail = ({ user }) => {
     const { id } = useParams();
     const [group, setGroup] = useState(null);
@@ -724,8 +838,8 @@ const SharedGroupDetail = ({ user }) => {
 
                 {/* Tasks */}
                 <div className="space-y-6 relative">
-                    {/* Floating Action Buttons */}
-                    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40 flex flex-col space-y-3">
+                    {/* Desktop Floating Action Buttons - Hidden on Mobile */}
+                    <div className="hidden md:flex fixed right-4 top-1/2 transform -translate-y-1/2 z-40 flex-col space-y-3">
                         {/* Delete Group Button */}
                         {canDelete() && (
                             <div className="relative group">
@@ -790,6 +904,16 @@ const SharedGroupDetail = ({ user }) => {
                             </div>
                         )}
                     </div>
+
+                    {/* Mobile Floating Dropdown Menu - Hidden on Desktop */}
+                    <MobileGroupActionMenu 
+                        canDelete={canDelete}
+                        canEdit={canEdit}
+                        onDeleteGroup={handleDeleteClick}
+                        onExitGroup={() => setShowExitModal(true)}
+                        onChangeLog={() => setShowChangeLog(true)}
+                        onAddTask={() => setShowAddTask(true)}
+                    />
 
                     {/* Delete Confirmation Modal */}
                     {showDeleteConfirm && (
