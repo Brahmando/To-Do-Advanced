@@ -22,6 +22,7 @@ import NotificationBell from './components/NotificationBell';
 import MyTasksPage from './components/MyTasksPage';
 import GroupTasksPage from './components/GroupTasksPage';
 import FeedbackPage from './components/FeedbackPage';
+import TaskBuddyChat from './components/TaskBuddyChat';
 
 // Google OAuth Client ID (you'll need to get this from Google Console)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
@@ -77,6 +78,7 @@ function App() {
   const [groups, setGroups] = useState([]);
   const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -577,6 +579,7 @@ function App() {
             onLogout={handleLogout}
             onGroupTaskClick={() => setShowGroupTaskModal(true)}
             onProfileClick={handleProfileClick}
+            onAIChatClick={() => setShowAIChat(true)}
             notifications={notifications}
             setNotifications={setNotifications}
           />
@@ -715,6 +718,29 @@ function App() {
             handleCompleteGroupTask={handleCompleteGroupTask}
             handleDeleteGroupTask={handleDeleteGroupTask}
           />
+
+          {/* AI Chatbot - Only show for logged-in users */}
+          {user && (
+            <>
+              {/* Floating Chat Button */}
+              <button
+                onClick={() => setShowAIChat(true)}
+                className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+                title="Chat with Task Buddy AI"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full animate-pulse"></span>
+              </button>
+
+              {/* AI Chat Interface */}
+              <TaskBuddyChat
+                isOpen={showAIChat}
+                onClose={() => setShowAIChat(false)}
+              />
+            </>
+          )}
         </div>
       </Router>
     </GoogleOAuthProvider>

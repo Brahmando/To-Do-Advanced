@@ -9,6 +9,12 @@ const groupRoutes = require('./routes/groups');
 const sharedGroupRoutes = require('./routes/sharedGroups');
 const feedbackRoutes = require('./routes/feedback');
 const chatRoutes = require('./routes/chat');
+const aiChatbotRoutes = require('./routes/aiChatbot');
+const aiChatbotAnalyticsRoutes = require('./routes/aiChatbotAnalytics');
+
+// Load AI Chatbot models to ensure they're registered
+require('./models/AiChatSession');
+require('./models/UserContextCache');
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +40,8 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/shared-groups', sharedGroupRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/ai-chatbot', aiChatbotRoutes);
+app.use('/api/ai-chatbot', aiChatbotAnalyticsRoutes);
 
 // MongoDB Connection
 mongoose.connect(mongoUri)

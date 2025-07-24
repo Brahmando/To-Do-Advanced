@@ -30,7 +30,7 @@ const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, message }) => {
   );
 };
 
-const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, onProfileClick, isGuestMode, notifications, setNotifications }) => {
+const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick, onProfileClick, isGuestMode, notifications, setNotifications, onAIChatClick }) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -126,6 +126,15 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                   >
                     <span className="hidden xl:inline">👥 </span>Group Tasks
                   </Link>
+                  
+                  {/* AI Chatbot Button */}
+                  <button
+                    onClick={onAIChatClick}
+                    className="bg-cyan-500 hover:bg-cyan-600 text-white px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 hover:shadow-lg whitespace-nowrap"
+                    title="Chat with Task Buddy AI"
+                  >
+                    <span className="hidden xl:inline">🤖 </span>AI Assistant
+                  </button>
                   
                   {/* Notification Bell with left margin to separate from task buttons */}
                   <div className="ml-4 lg:ml-6">
@@ -329,6 +338,18 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
                     <span className="text-xl">👥</span>
                     <span className="font-medium">Group Tasks</span>
                   </Link>
+                  
+                  {/* AI Chatbot Button - Mobile */}
+                  <button
+                    onClick={() => {
+                      onAIChatClick && onAIChatClick();
+                      closeMobileMenu();
+                    }}
+                    className="flex items-center space-x-3 text-white hover:bg-cyan-500/20 p-3 rounded-lg transition-all duration-200 w-full text-left transform hover:scale-105"
+                  >
+                    <span className="text-xl">🤖</span>
+                    <span className="font-medium">AI Assistant</span>
+                  </button>
                   
                   <button
                     onClick={() => {
