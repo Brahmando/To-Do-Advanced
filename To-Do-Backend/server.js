@@ -39,11 +39,19 @@ app.use(express.json());
 // Configure CORS origins from environment variables
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-  : ["http://localhost:3000", "http://localhost:5173"]; // fallback for development
+  : [
+      "http://localhost:3000", 
+      "http://localhost:5173",
+      "https://to-do-advanced-rose.vercel.app" // production frontend
+    ];
 
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Routes
