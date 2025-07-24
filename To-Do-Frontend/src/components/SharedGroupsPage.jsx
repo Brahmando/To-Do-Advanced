@@ -20,7 +20,7 @@ const FloatingActionMenu = ({ onCreateGroup, onJoinGroup, onRefresh }) => {
   };
 
   return (
-    <div className="fixed right-4 bottom-6 z-50">
+    <div className="fixed right-4 bottom-24 z-50">
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute bottom-16 right-0 flex flex-col space-y-3 mb-2">

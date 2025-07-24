@@ -129,24 +129,29 @@ function App() {
     safeLocalStorage.setItem('guestTasks', allTasks);
   };
 
-  const handleAdd = async () => {
+  const handleAdd = async (forceIndividualTask = null) => {
     if (!input.trim() || !date) {
       alert('Please enter a task and select a date.');
       return;
     }
 
-    if (isGroupTaskMode && !groupName.trim()) {
+    // Determine if this should be a group task
+    const shouldBeGroupTask = forceIndividualTask === false ? false : 
+                             forceIndividualTask === true ? false : 
+                             isGroupTaskMode;
+
+    if (shouldBeGroupTask && !groupName.trim()) {
       alert('Please enter a group name.');
       return;
     }
 
     if (!user && !isGuestMode) {
-      setPendingTask({ text: input, date, groupName: isGroupTaskMode ? groupName : null });
+      setPendingTask({ text: input, date, groupName: shouldBeGroupTask ? groupName : null });
       setShowLoginModal(true);
       return;
     }
 
-    if (isGroupTaskMode) {
+    if (shouldBeGroupTask) {
       try {
         if (isGuestMode) {
           const guestGroups = safeLocalStorage.getItem('guestGroups', []);
@@ -206,12 +211,14 @@ function App() {
           console.log('Creating task for logged-in user:', { text: input, date });
           console.log('Current user state:', user);
           console.log('Token in localStorage:', localStorage.getItem('token'));
+          console.log('Is guest mode:', isGuestMode);
           const result = await createTask({ text: input, date });
           console.log('Task created successfully:', result);
-          fetchTasks();
+          await fetchTasks(); // Make sure to wait for fetch
         } catch (error) {
           console.error('Error creating task:', error);
-          alert('Failed to create task. Please check your connection and try again.');
+          console.error('Error details:', error.message);
+          alert(`Failed to create task: ${error.message}`);
         }
       }
       setInput('');

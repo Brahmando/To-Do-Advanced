@@ -20,6 +20,17 @@ const MyTasksPage = ({
   formatDate,
   isGuestMode
 }) => {
+  // Create a wrapper function that ensures we're always creating individual tasks
+  const handleAddPersonalTask = async () => {
+    if (!input.trim() || !date) {
+      alert('Please enter a task and select a date.');
+      return;
+    }
+
+    // Call handleAdd but ensure it's treated as an individual task
+    // We'll pass a flag or modify the call to bypass group task logic
+    await handleAdd(false); // Pass false to indicate this should be an individual task
+  };
   const totalTasks = tasks.length + completed.length;
   const completedCount = completed.length;
   
@@ -74,11 +85,12 @@ const MyTasksPage = ({
             setInput={setInput} 
             date={date} 
             setDate={setDate} 
-            handleAdd={handleAdd}
+            handleAdd={handleAddPersonalTask}
             isGroupTaskMode={false}
             setIsGroupTaskMode={() => {}}
             groupName=""
             setGroupName={() => {}}
+            hideGroupToggle={true}
           />
         </div>
 

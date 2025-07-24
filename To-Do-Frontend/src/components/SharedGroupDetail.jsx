@@ -45,7 +45,7 @@ const MobileGroupActionMenu = ({ canDelete, canEdit, onDeleteGroup, onExitGroup,
     };
 
     return (
-        <div className="md:hidden fixed right-4 bottom-6 z-50">
+        <div className="md:hidden fixed right-4 bottom-24 z-50">
             {/* Dropdown Menu */}
             {isOpen && (
                 <div className="absolute bottom-16 right-0 flex flex-col space-y-2 mb-2">

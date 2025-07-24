@@ -57,7 +57,35 @@ const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode,
       setDateError('All date and time fields are required.');
       return;
     }
+    
+    // Validate the date values
+    const numYear = Number(year);
+    const numDay = Number(day);
+    const numHour = Number(hour);
+    const numMinute = Number(minute);
+    
+    if (numYear < 2020 || numYear > 2030) {
+      setDateError('Please enter a valid year (2020-2030).');
+      return;
+    }
+    
+    if (numDay < 1 || numDay > 31) {
+      setDateError('Please enter a valid day (1-31).');
+      return;
+    }
+    
+    if (numHour < 1 || numHour > 12) {
+      setDateError('Please enter a valid hour (1-12).');
+      return;
+    }
+    
+    if (numMinute < 0 || numMinute > 59) {
+      setDateError('Please enter a valid minute (0-59).');
+      return;
+    }
+    
     setDateError('');
+    console.log('TaskInput: Calling handleAdd with date:', date);
     handleAdd();
   };
 

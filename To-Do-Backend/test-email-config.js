@@ -1,4 +1,5 @@
 // Quick verification script to test email service
+require('dotenv').config();
 const emailService = require('./services/emailService');
 
 async function testEmailService() {
