@@ -1,8 +1,8 @@
-# Advanced To-Do Application
+# Advanced To-Do Application (Beta)
 
-A comprehensive task management solution with real-time collaboration features. Built with the MERN stack (MongoDB, Express.js, React, Node.js) for seamless personal and team productivity.
+🚀 **Beta Version** - A comprehensive task management solution with real-time collaboration features and modern authentication. Built with the MERN stack (MongoDB, Express.js, React, Node.js) for seamless personal and team productivity.
 
-## 🚀 Key Features
+## 🌟 Key Features
 
 ### 📝 Task Management
 - Create, edit, and organize tasks with due dates and priorities
@@ -10,7 +10,13 @@ A comprehensive task management solution with real-time collaboration features. 
 - Set and track deadlines with calendar integration
 - Categorize and filter tasks for better organization
 
-### 👥 Team Collaboration
+### � Modern Authentication
+- **Email Verification**: Secure OTP-based email verification
+- **Google Sign-In**: One-click authentication with Google accounts
+- **JWT Tokens**: Secure session management
+- **Password Security**: Bcrypt encryption for passwords
+
+### �👥 Team Collaboration
 - **Public & Private Groups**: Create groups with different visibility settings
 - **Role-Based Access Control**:
   - **Owner**: Full administrative control
@@ -19,11 +25,18 @@ A comprehensive task management solution with real-time collaboration features. 
   - **Observer**: View-only access
 - **Activity Feed**: Track all changes in real-time
 
+### � Mobile-Responsive Design
+- **Mobile-First UI**: Optimized for smartphones and tablets
+- **Hamburger Navigation**: Collapsible menu for mobile devices
+- **Touch-Friendly Interface**: Large buttons and easy navigation
+- **Responsive Forms**: Adaptive layouts for all screen sizes
+
 ### 🔒 Security & Access
-- Secure authentication with JWT
+- Email verification with OTP system
+- Google OAuth 2.0 integration
 - Private groups with access key protection
 - Role-based permissions system
-- Secure API endpoints
+- Secure API endpoints with JWT authentication
 
 ## 🛠️ Tech Stack
 

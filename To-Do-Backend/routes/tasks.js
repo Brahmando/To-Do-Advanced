@@ -11,19 +11,19 @@ const {
 } = require('../controllers/tasksController'); // Corrected import path
 
 // POST /api/tasks
-router.post('/', createTask);
+router.post('/', auth, createTask);
 
 // GET /api/tasks
-router.get('/', getTasks);
+router.get('/', auth, getTasks);
 
 // PUT /api/tasks/:id/complete
-router.put('/:id/complete', completeTask);
+router.put('/:id/complete', auth, completeTask);
 
 // PUT /api/tasks/:id/undo
-router.put('/:id/undo', undoTask); 
+router.put('/:id/undo', auth, undoTask); 
 
 // DELETE /api/tasks/:id
-router.delete('/:id', deleteTask);
+router.delete('/:id', auth, deleteTask);
 
 // Edit task
 router.put('/:id', auth, async (req, res) => {

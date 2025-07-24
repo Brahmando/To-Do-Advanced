@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Navbar from './components/Navbar';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
@@ -7,6 +8,8 @@ import CompletedList from './components/CompletedList';
 import DeletedList from './components/DeletedList';
 import LoginModal from './components/LoginModal';
 import SignupModal from './components/SignupModal';
+import ProfileModal from './components/ProfileModal';
+import OTPVerificationModal from './components/OTPVerificationModal';
 import { getTasks, createTask, completeTask, deleteTask, undoTask } from './services/taskService';
 import { getGroups, createGroup, completeGroup, deleteGroup, editGroupTask } from './services/groupService';
 import { getNotifications } from './services/sharedGroupService';
@@ -16,6 +19,43 @@ import SharedGroupsPage from './components/SharedGroupsPage';
 import SharedGroupDetail from './components/SharedGroupDetail';
 import HomePage from './components/HomePage';
 import NotificationBell from './components/NotificationBell';
+import MyTasksPage from './components/MyTasksPage';
+import GroupTasksPage from './components/GroupTasksPage';
+import FeedbackPage from './components/FeedbackPage';
+import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactPage';
+import TaskBuddyChat from './components/TaskBuddyChat';
+
+// Google OAuth Client ID (you'll need to get this from Google Console)
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";
+
+// Safe localStorage operations
+const safeLocalStorage = {
+  getItem: (key, defaultValue = null) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error);
+      localStorage.removeItem(key); // Remove corrupted data
+      return defaultValue;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error writing to localStorage key "${key}":`, error);
+    }
+  },
+  removeItem: (key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Error removing localStorage key "${key}":`, error);
+    }
+  }
+};
 
 function formatDate(date) {
   return new Date(date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -31,12 +71,16 @@ function App() {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpUserData, setOtpUserData] = useState(null);
   const [pendingTask, setPendingTask] = useState(null);
   const [isGroupTaskMode, setIsGroupTaskMode] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups] = useState([]);
   const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -44,7 +88,13 @@ function App() {
     const guestMode = localStorage.getItem('guestMode');
 
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user'); // Remove corrupted data
+      }
     } else if (guestMode) {
       setIsGuestMode(true);
       loadGuestTasks();
@@ -71,37 +121,42 @@ function App() {
   }, [user]);
 
   const loadGuestTasks = () => {
-    const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
+    const guestTasks = safeLocalStorage.getItem('guestTasks', []);
     setTasks(guestTasks.filter(task => !task.completed && !task.deleted));
     setCompleted(guestTasks.filter(task => task.completed && !task.deleted));
     setDeleted(guestTasks.filter(task => task.deleted).slice(-3));
   };
 
   const saveGuestTasks = (allTasks) => {
-    localStorage.setItem('guestTasks', JSON.stringify(allTasks));
+    safeLocalStorage.setItem('guestTasks', allTasks);
   };
 
-  const handleAdd = async () => {
+  const handleAdd = async (forceIndividualTask = null) => {
     if (!input.trim() || !date) {
       alert('Please enter a task and select a date.');
       return;
     }
 
-    if (isGroupTaskMode && !groupName.trim()) {
+    // Determine if this should be a group task
+    const shouldBeGroupTask = forceIndividualTask === false ? false : 
+                             forceIndividualTask === true ? false : 
+                             isGroupTaskMode;
+
+    if (shouldBeGroupTask && !groupName.trim()) {
       alert('Please enter a group name.');
       return;
     }
 
     if (!user && !isGuestMode) {
-      setPendingTask({ text: input, date, groupName: isGroupTaskMode ? groupName : null });
+      setPendingTask({ text: input, date, groupName: shouldBeGroupTask ? groupName : null });
       setShowLoginModal(true);
       return;
     }
 
-    if (isGroupTaskMode) {
+    if (shouldBeGroupTask) {
       try {
         if (isGuestMode) {
-          const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
+          const guestGroups = safeLocalStorage.getItem('guestGroups', []);
           let existingGroup = guestGroups.find(g => g.name === groupName);
 
           const newTask = {
@@ -126,7 +181,7 @@ function App() {
             guestGroups.push(existingGroup);
           }
 
-          localStorage.setItem('guestGroups', JSON.stringify(guestGroups));
+          safeLocalStorage.setItem('guestGroups', guestGroups);
           setGroups(guestGroups);
         } else {
           await createGroup({ name: groupName, taskText: input, taskDate: date });
@@ -155,10 +210,17 @@ function App() {
         setTasks(prev => [...prev, newTask]);
       } else {
         try {
-          await createTask({ text: input, date });
-          fetchTasks();
+          console.log('Creating task for logged-in user:', { text: input, date });
+          console.log('Current user state:', user);
+          console.log('Token in localStorage:', localStorage.getItem('token'));
+          console.log('Is guest mode:', isGuestMode);
+          const result = await createTask({ text: input, date });
+          console.log('Task created successfully:', result);
+          await fetchTasks(); // Make sure to wait for fetch
         } catch (error) {
-          console.log('Error creating task:', error);
+          console.error('Error creating task:', error);
+          console.error('Error details:', error.message);
+          alert(`Failed to create task: ${error.message}`);
         }
       }
       setInput('');
@@ -169,8 +231,8 @@ function App() {
   const handleComplete = (id) => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, completed: true, completedAt: new Date().toISOString() }
           : task
       );
@@ -190,8 +252,8 @@ function App() {
   const handleDelete = (id, from = 'tasks') => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, deleted: true, deletedAt: new Date().toISOString() }
           : task
       );
@@ -222,8 +284,8 @@ function App() {
   const handleUndo = (id) => {
     if (isGuestMode) {
       const guestTasks = JSON.parse(localStorage.getItem('guestTasks') || '[]');
-      const updatedTasks = guestTasks.map(task => 
-        task._id === id 
+      const updatedTasks = guestTasks.map(task =>
+        task._id === id
           ? { ...task, completed: false, completedAt: null }
           : task
       );
@@ -274,7 +336,7 @@ function App() {
     try {
       if (isGuestMode) {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
-        const updatedGroups = guestGroups.map(group => 
+        const updatedGroups = guestGroups.map(group =>
           group._id === groupId ? { ...group, completed: true } : group
         );
         localStorage.setItem('guestGroups', JSON.stringify(updatedGroups));
@@ -312,8 +374,8 @@ function App() {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
         const updatedGroups = guestGroups.map(group => ({
           ...group,
-          tasks: group.tasks.map(task => 
-            task._id === taskId 
+          tasks: group.tasks.map(task =>
+            task._id === taskId
               ? { ...task, completed: true, completedAt: new Date().toISOString() }
               : task
           )
@@ -336,8 +398,8 @@ function App() {
         const guestGroups = JSON.parse(localStorage.getItem('guestGroups') || '[]');
         const updatedGroups = guestGroups.map(group => ({
           ...group,
-          tasks: group.tasks.map(task => 
-            task._id === taskId 
+          tasks: group.tasks.map(task =>
+            task._id === taskId
               ? { ...task, deleted: true, deletedAt: new Date().toISOString() }
               : task
           )
@@ -436,6 +498,31 @@ function App() {
     localStorage.removeItem('guestTasks');
   };
 
+  const handleShowOTPModal = (otpData) => {
+    setOtpUserData(otpData);
+    setShowOTPModal(true);
+  };
+
+  const handleOTPVerification = (userData) => {
+    setUser(userData);
+    setIsGuestMode(false);
+    setShowOTPModal(false);
+    setOtpUserData(null);
+    localStorage.removeItem('guestMode');
+    localStorage.removeItem('guestTasks');
+
+    if (pendingTask) {
+      createTask(pendingTask)
+        .then(() => {
+          setPendingTask(null);
+          fetchTasks();
+        })
+        .catch(error => {
+          console.log('Error creating pending task:', error);
+        });
+    }
+  };
+
   const handleGuestMode = () => {
     setIsGuestMode(true);
     localStorage.setItem('guestMode', 'true');
@@ -475,94 +562,199 @@ function App() {
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestTasks');
     localStorage.removeItem('guestGroups');
+
+    // Navigate to home page after logout/exit guest mode
+    window.location.href = '/';
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileModal(true);
+  };
+
+  const handleUpdateProfile = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
-        <Navbar 
-          user={user}
-          isGuestMode={isGuestMode}
-          onLoginClick={() => setShowLoginModal(true)}
-          onSignupClick={() => setShowSignupModal(true)}
-          onLogout={handleLogout}
-          onGroupTaskClick={() => setShowGroupTaskModal(true)}
-          notifications={notifications}
-          setNotifications={setNotifications}
-        />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-cyan-100 font-display">
+          <Navbar
+            user={user}
+            isGuestMode={isGuestMode}
+            onLoginClick={() => setShowLoginModal(true)}
+            onSignupClick={() => setShowSignupModal(true)}
+            onLogout={handleLogout}
+            onGroupTaskClick={() => setShowGroupTaskModal(true)}
+            onProfileClick={handleProfileClick}
+            onAIChatClick={() => setShowAIChat(true)}
+            notifications={notifications}
+            setNotifications={setNotifications}
+          />
 
-        <Routes>
-          <Route path="/" element={
-            <HomePage
-              tasks={tasks}
-              completed={completed}
-              deleted={deleted}
-              input={input}
-              setInput={setInput}
-              date={date}
-              setDate={setDate}
-              handleAdd={handleAdd}
-              handleComplete={handleComplete}
-              handleDelete={handleDelete}
-              handleUndo={handleUndo}
-              isGroupTaskMode={isGroupTaskMode}
-              setIsGroupTaskMode={setIsGroupTaskMode}
-              groupName={groupName}
-              setGroupName={setGroupName}
-              groups={groups}
-              handleCompleteGroupTask={handleCompleteGroupTask}
-              handleDeleteGroupTask={handleDeleteGroupTask}
-              handleUndoGroupTask={handleUndoGroupTask}
-              handleEditGroupTask={handleEditGroupTask}
-              handleCompleteGroup={handleCompleteGroup}
-              handleDeleteGroup={handleDeleteGroup}
-              formatDate={formatDate}
-              isGuestMode={isGuestMode}
-            />
-          } />
-          <Route path="/shared-groups" element={
-            user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
-          } />
-          <Route path="/shared-group/:id" element={
-            user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
-          } />
-        </Routes>
+          <Routes>
+            <Route path="/" element={
+              <HomePage
+                user={user}
+                tasks={tasks}
+                completed={completed}
+                deleted={deleted}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleComplete={handleComplete}
+                handleDelete={handleDelete}
+                handleUndo={handleUndo}
+                isGroupTaskMode={isGroupTaskMode}
+                setIsGroupTaskMode={setIsGroupTaskMode}
+                groupName={groupName}
+                setGroupName={setGroupName}
+                groups={groups}
+                handleCompleteGroupTask={handleCompleteGroupTask}
+                handleDeleteGroupTask={handleDeleteGroupTask}
+                handleUndoGroupTask={handleUndoGroupTask}
+                handleEditGroupTask={handleEditGroupTask}
+                handleCompleteGroup={handleCompleteGroup}
+                handleDeleteGroup={handleDeleteGroup}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+              />
+            } />
+            <Route path="/my-tasks" element={
+              <MyTasksPage
+                tasks={tasks}
+                completed={completed}
+                deleted={deleted}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleComplete={handleComplete}
+                handleDelete={handleDelete}
+                handleUndo={handleUndo}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+              />
+            } />
+            <Route path="/group-tasks" element={
+              <GroupTasksPage
+                groups={groups}
+                input={input}
+                setInput={setInput}
+                date={date}
+                setDate={setDate}
+                handleAdd={handleAdd}
+                handleCompleteGroupTask={handleCompleteGroupTask}
+                handleDeleteGroupTask={handleDeleteGroupTask}
+                handleUndoGroupTask={handleUndoGroupTask}
+                handleEditGroupTask={handleEditGroupTask}
+                handleCompleteGroup={handleCompleteGroup}
+                handleDeleteGroup={handleDeleteGroup}
+                formatDate={formatDate}
+                isGuestMode={isGuestMode}
+                isGroupTaskMode={isGroupTaskMode}
+                setIsGroupTaskMode={setIsGroupTaskMode}
+                groupName={groupName}
+                setGroupName={setGroupName}
+              />
+            } />
+            <Route path="/shared-groups" element={
+              user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
+            } />
+            <Route path="/shared-group/:id" element={
+              user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
+            } />
+            <Route path="/feedback" element={
+              <FeedbackPage user={user} />
+            } />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+          </Routes>
 
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          onLogin={handleLogin}
-          onSwitchToSignup={() => {
-            setShowLoginModal(false);
-            setShowSignupModal(true);
-          }}
-          onGuestMode={handleGuestMode}
-        />
+          <LoginModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLogin={handleLogin}
+            onSwitchToSignup={() => {
+              setShowLoginModal(false);
+              setShowSignupModal(true);
+            }}
+            onGuestMode={handleGuestMode}
+            onShowOTPModal={handleShowOTPModal}
+          />
 
-        <SignupModal
-          isOpen={showSignupModal}
-          onClose={() => setShowSignupModal(false)}
-          onSignup={handleSignup}
-          onSwitchToLogin={() => {
-            setShowSignupModal(false);
-            setShowLoginModal(true);
-          }}
-        />
+          <SignupModal
+            isOpen={showSignupModal}
+            onClose={() => setShowSignupModal(false)}
+            onSignup={handleSignup}
+            onSwitchToLogin={() => {
+              setShowSignupModal(false);
+              setShowLoginModal(true);
+            }}
+            onShowOTPModal={handleShowOTPModal}
+          />
 
-        <GroupTaskModal
-          isOpen={showGroupTaskModal}
-          onClose={() => setShowGroupTaskModal(false)}
-          groups={groups}
-          formatDate={formatDate}
-          onCompleteGroup={handleCompleteGroup}
-          onDeleteGroup={handleDeleteGroup}
-          handleUndoGroupTask={handleUndoGroupTask}
-          handleEditGroupTask={handleEditGroupTask}
-          handleCompleteGroupTask={handleCompleteGroupTask}
-          handleDeleteGroupTask={handleDeleteGroupTask}
-        />
-      </div>
-    </Router>
+          <OTPVerificationModal
+            isOpen={showOTPModal}
+            onClose={() => {
+              setShowOTPModal(false);
+              setOtpUserData(null);
+            }}
+            onVerify={handleOTPVerification}
+            userEmail={otpUserData?.email}
+            userName={otpUserData?.name}
+            userId={otpUserData?.userId}
+          />
+
+          <ProfileModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            user={user}
+            onUpdateProfile={handleUpdateProfile}
+          />
+
+          <GroupTaskModal
+            isOpen={showGroupTaskModal}
+            onClose={() => setShowGroupTaskModal(false)}
+            groups={groups}
+            formatDate={formatDate}
+            onCompleteGroup={handleCompleteGroup}
+            onDeleteGroup={handleDeleteGroup}
+            handleUndoGroupTask={handleUndoGroupTask}
+            handleEditGroupTask={handleEditGroupTask}
+            handleCompleteGroupTask={handleCompleteGroupTask}
+            handleDeleteGroupTask={handleDeleteGroupTask}
+          />
+
+          {/* AI Chatbot - Only show for logged-in users */}
+          {user && (
+            <>
+              {/* Floating Chat Button */}
+              <button
+                onClick={() => setShowAIChat(true)}
+                className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+                title="Chat with Task Buddy AI"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full animate-pulse"></span>
+              </button>
+
+              {/* AI Chat Interface */}
+              <TaskBuddyChat
+                isOpen={showAIChat}
+                onClose={() => setShowAIChat(false)}
+              />
+            </>
+          )}
+        </div>
+      </Router>
+    </GoogleOAuthProvider>
   );
 }
 
