@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const auth = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   console.log('Token:', token);
-  
+
   if (!token) {
     // Allow guest access
     req.user = null;

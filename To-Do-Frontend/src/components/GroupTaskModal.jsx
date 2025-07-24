@@ -81,6 +81,7 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
               handleEditTask={handleEditGroupTask}
               showShareButton={true}
               onShareGroup={openShareModal}
+              showMainDropdown={false}
             />
           )}
         </div>
@@ -141,21 +142,21 @@ const GroupTaskModal = ({ isOpen, onClose, groups, formatDate, onCompleteGroup, 
                 )}
 
                 <div className="flex space-x-3 mt-6">
-                  <button
-                    onClick={() => {
-                      setShowShareModal(false);
-                      setSelectedGroup(null);
-                    }}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleShareGroup}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
-                  >
-                    Share Group
-                  </button>
+                    <button
+                      onClick={() => {
+                        setShowShareModal(false);
+                        setSelectedGroup(null);
+                      }}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleShareGroup}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
+                    >
+                      Share Group
+                    </button>
                 </div>
               </div>
             </div>

@@ -9,7 +9,7 @@ const currentYear = new Date().getFullYear();
 // const hours = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12 for AM/PM
 // const minutes = Array.from({ length: 60 }, (_, i) => i);
 
-const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode, setIsGroupTaskMode, groupName, setGroupName }) => {
+const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode, setIsGroupTaskMode, groupName, setGroupName, hideGroupToggle = false }) => {
   const initial = date ? new Date(date) : new Date();
 
   // Store date parts as strings to allow empty inputs
@@ -57,37 +57,84 @@ const TaskInput = ({ input, setInput, date, setDate, handleAdd, isGroupTaskMode,
       setDateError('All date and time fields are required.');
       return;
     }
+    
+    // Validate the date values
+    const numYear = Number(year);
+    const numDay = Number(day);
+    const numHour = Number(hour);
+    const numMinute = Number(minute);
+    
+    if (numYear < 2020 || numYear > 2030) {
+      setDateError('Please enter a valid year (2020-2030).');
+      return;
+    }
+    
+    if (numDay < 1 || numDay > 31) {
+      setDateError('Please enter a valid day (1-31).');
+      return;
+    }
+    
+    if (numHour < 1 || numHour > 12) {
+      setDateError('Please enter a valid hour (1-12).');
+      return;
+    }
+    
+    if (numMinute < 0 || numMinute > 59) {
+      setDateError('Please enter a valid minute (0-59).');
+      return;
+    }
+    
     setDateError('');
+    console.log('TaskInput: Calling handleAdd with date:', date);
     handleAdd();
   };
 
   return (
     <div className="mb-8">
-      {/* Group Task Toggle */}
-      <div className="mb-4 p-4 bg-purple-50/50 rounded-xl border border-purple-200">
-        <label className="flex items-center space-x-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isGroupTaskMode}
-            onChange={(e) => setIsGroupTaskMode(e.target.checked)}
-            className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
-          />
-          <span className="text-purple-700 font-medium">Group Task Mode</span>
-        </label>
-
-        {isGroupTaskMode && (
-          <div className="mt-3">
+      {/* Group Task Toggle - Only show if not hidden */}
+      {!hideGroupToggle && (
+        <div className="mb-4 p-4 bg-purple-50/50 rounded-xl border border-purple-200">
+          <label className="flex items-center space-x-3 cursor-pointer">
             <input
-              type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Enter group name..."
-              className="w-full px-3 py-2 rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-500"
-              required={isGroupTaskMode}
+              type="checkbox"
+              checked={isGroupTaskMode}
+              onChange={(e) => setIsGroupTaskMode(e.target.checked)}
+              className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
             />
-          </div>
-        )}
-      </div>
+            <span className="text-purple-700 font-medium">Group Task Mode</span>
+          </label>
+
+          {isGroupTaskMode && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group name..."
+                className="w-full px-3 py-2 rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-500"
+                required={isGroupTaskMode}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Group Name Input - Show directly when toggle is hidden and in group mode */}
+      {hideGroupToggle && isGroupTaskMode && (
+        <div className="mb-4 p-4 bg-purple-50/50 rounded-xl border border-purple-200">
+          <label className="block text-purple-700 font-medium mb-2">
+            Group Name
+          </label>
+          <input
+            type="text"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            placeholder="Enter group name..."
+            className="w-full px-3 py-2 rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:outline-none bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-500"
+            required={isGroupTaskMode}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6 items-center justify-center w-full flex-wrap">
         <input

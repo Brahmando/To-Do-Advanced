@@ -1,5 +1,10 @@
-.node_modules
+node_modules
 .upm
 .replit
 attached_assets
 .env
+.env.example
+.vscode
+.idea
+.DS_Store   
+.kiro

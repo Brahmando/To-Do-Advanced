@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
+import GoogleSignInButton from './GoogleSignInButton';
 
-const LoginModal = ({ isOpen, onClose, onLogin, onSwitchToSignup, onGuestMode }) => {
+const LoginModal = ({ isOpen, onClose, onLogin, onSwitchToSignup, onGuestMode, onShowOTPModal }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,18 @@ const LoginModal = ({ isOpen, onClose, onLogin, onSwitchToSignup, onGuestMode })
         onLogin(data.user);
         onClose();
       } else {
-        setError(data.error || 'Login failed');
+        if (data.emailNotVerified && data.userId) {
+          // Email not verified, show OTP modal
+          setError('');
+          onClose();
+          onShowOTPModal({
+            userId: data.userId,
+            email: email,
+            name: 'User' // We don't have the name from login response
+          });
+        } else {
+          setError(data.error || 'Login failed');
+        }
       }
     } catch (error) {
       setError('Network error. Please try again.');
@@ -38,18 +50,62 @@ const LoginModal = ({ isOpen, onClose, onLogin, onSwitchToSignup, onGuestMode })
     }
   };
 
+  const handleGoogleSuccess = (userData) => {
+    onLogin(userData);
+    onClose();
+  };
+
+  const handleGoogleError = (error) => {
+    setError(error);
+  };
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setError('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Login</h2>
+      <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Back!</h2>
+          <div className="inline-block bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full">
+            🚀 Beta Version
+          </div>
+        </div>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
+
+        {/* Google Sign-In */}
+        <div className="mb-6 flex flex-col items-center w-full px-2 sm:px-0">
+          <GoogleSignInButton 
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            text="continue_with"
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -109,8 +165,14 @@ const LoginModal = ({ isOpen, onClose, onLogin, onSwitchToSignup, onGuestMode })
           </p>
         </div>
 
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 text-xs text-center">
+            <span className="font-semibold">Beta Testing:</span> Help us improve by reporting any issues you encounter!
+          </p>
+        </div>
+
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
           ✕
