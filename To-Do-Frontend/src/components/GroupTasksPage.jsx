@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import GroupTaskList from './GroupTaskList';
 import ProgressBar from './ProgressBar';
 import TaskInput from './TaskInput';
@@ -18,6 +18,8 @@ const GroupTasksPage = ({
   handleDeleteGroup,
   formatDate,
   isGuestMode,
+  isGroupTaskMode,
+  setIsGroupTaskMode,
   groupName,
   setGroupName
 }) => {
@@ -35,6 +37,11 @@ const GroupTasksPage = ({
   const totalTasks = allTasks.length;
   const completedTasks = allTasks.filter(task => task.completed).length;
   const activeTasks = totalTasks - completedTasks;
+
+  // Automatically enable group task mode when on group tasks page
+  useEffect(() => {
+    setIsGroupTaskMode(true);
+  }, [setIsGroupTaskMode]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
@@ -114,10 +121,11 @@ const GroupTasksPage = ({
             date={date} 
             setDate={setDate} 
             handleAdd={handleAdd}
-            isGroupTaskMode={true}
-            setIsGroupTaskMode={() => {}}
+            isGroupTaskMode={isGroupTaskMode}
+            setIsGroupTaskMode={setIsGroupTaskMode}
             groupName={groupName}
             setGroupName={setGroupName}
+            hideGroupToggle={true}
           />
         </div>
 

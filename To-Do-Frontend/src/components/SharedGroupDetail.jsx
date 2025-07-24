@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ProgressBar from './ProgressBar';
+import GroupChat from './GroupChat';
 import {
     DndContext,
     closestCenter,
@@ -1457,6 +1458,15 @@ const SharedGroupDetail = ({ user }) => {
                     </div>
                 )}
             </div>
+
+            {/* Group Chat Component */}
+            {group && user && (
+                <GroupChat 
+                    groupId={id} 
+                    user={user} 
+                    groupMembers={group.members || []} 
+                />
+            )}
         </div>
     );
 };

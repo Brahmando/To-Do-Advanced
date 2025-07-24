@@ -1,21 +1,31 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const http = require('http');
 require('dotenv').config(); // Load environment variables from .env file
 const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
 const sharedGroupRoutes = require('./routes/sharedGroups');
 const feedbackRoutes = require('./routes/feedback');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
+const server = http.createServer(app);
+
+// Setup Socket.IO
+const setupSocketServer = require('./socket');
+const io = setupSocketServer(server);
 
 const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI || "mongodb+srv://powerangerinfinite123:n2n1RXzFsHFfzmNJ@mongocluster.pe7odxo.mongodb.net/todo_app?retryWrites=true&w=majority&appName=MongoCluster";
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:5173"],
+  credentials: true
+}));
 
 // Routes
 app.use('/api/tasks', taskRoutes);
@@ -23,14 +33,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/shared-groups', sharedGroupRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/chat', chatRoutes);
 
 // MongoDB Connection
 mongoose.connect(mongoUri)
   .then(() => {
     console.log('🚀 To-Do App (Beta) - MongoDB connected successfully');
-    // Start the server
-    app.listen(port, () => {
+    // Start the server with Socket.IO support
+    server.listen(port, () => {
       console.log(`🌟 To-Do App Beta Server running on port ${port} - http://localhost:${port}`);
+      console.log('💬 Socket.IO chat server enabled');
       console.log('📧 Email service configured for OTP verification');
       console.log('⚠️  Beta version - Please report any issues!');
     });

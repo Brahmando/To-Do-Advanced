@@ -644,6 +644,8 @@ function App() {
                 handleDeleteGroup={handleDeleteGroup}
                 formatDate={formatDate}
                 isGuestMode={isGuestMode}
+                isGroupTaskMode={isGroupTaskMode}
+                setIsGroupTaskMode={setIsGroupTaskMode}
                 groupName={groupName}
                 setGroupName={setGroupName}
               />
