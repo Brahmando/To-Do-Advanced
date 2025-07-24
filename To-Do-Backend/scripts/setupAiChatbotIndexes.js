@@ -7,7 +7,12 @@ const UserContextCache = require('../models/UserContextCache');
 
 async function setupIndexes() {
   try {
-    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://powerangerinfinite123:n2n1RXzFsHFfzmNJ@mongocluster.pe7odxo.mongodb.net/todo_app?retryWrites=true&w=majority&appName=MongoCluster";
+    const mongoUri = process.env.MONGODB_URI;
+    
+    if (!mongoUri) {
+      console.error('❌ MONGODB_URI environment variable is required');
+      process.exit(1);
+    }
     
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');

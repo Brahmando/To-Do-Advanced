@@ -8,9 +8,14 @@ const onlineUsers = new Map(); // userId -> socketId
 const groupUsers = new Map(); // groupId -> Set of userIds
 
 function setupSocketServer(server) {
+  // Configure CORS origins from environment variables
+  const allowedOrigins = process.env.CORS_ORIGINS 
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+    : ["http://localhost:3000", "http://localhost:5173"]; // fallback for development
+
   const io = socketIo(server, {
     cors: {
-      origin: ["http://localhost:3000", "http://localhost:5173"],
+      origin: allowedOrigins,
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -22,7 +27,7 @@ function setupSocketServer(server) {
       const token = socket.handshake.auth.token;
       if (!token) return next(new Error('Authentication error'));
       
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId);
       if (!user) return next(new Error('User not found'));
       

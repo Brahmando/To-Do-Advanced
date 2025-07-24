@@ -22,6 +22,8 @@ import NotificationBell from './components/NotificationBell';
 import MyTasksPage from './components/MyTasksPage';
 import GroupTasksPage from './components/GroupTasksPage';
 import FeedbackPage from './components/FeedbackPage';
+import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactPage';
 import TaskBuddyChat from './components/TaskBuddyChat';
 
 // Google OAuth Client ID (you'll need to get this from Google Console)
@@ -669,6 +671,8 @@ function App() {
             <Route path="/feedback" element={
               <FeedbackPage user={user} />
             } />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
           </Routes>
 
           <LoginModal

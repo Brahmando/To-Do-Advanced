@@ -3,6 +3,7 @@ node_modules
 .replit
 attached_assets
 .env
+.env.example
 .vscode
 .idea
 .DS_Store   

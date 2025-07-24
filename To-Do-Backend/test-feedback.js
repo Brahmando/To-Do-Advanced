@@ -5,8 +5,13 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+// Configure CORS origins from environment variables
+const allowedOrigins = process.env.CORS_ORIGINS 
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : ["http://localhost:3000", "http://localhost:5173"]; // fallback for development
+
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173"],
+  origin: allowedOrigins,
   credentials: true
 }));
 

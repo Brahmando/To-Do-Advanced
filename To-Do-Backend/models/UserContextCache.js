@@ -66,8 +66,7 @@ const userContextCacheSchema = new mongoose.Schema({
   }
 });
 
-// Index for efficient cache lookups and cleanup
-userContextCacheSchema.index({ userId: 1 });
+// Index for efficient cache cleanup (userId already has unique index)
 userContextCacheSchema.index({ cacheExpiry: 1 });
 
 // Update updatedAt on save

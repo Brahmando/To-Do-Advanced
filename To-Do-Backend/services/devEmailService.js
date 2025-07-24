@@ -94,6 +94,92 @@ class DevEmailService {
     
     return true; // Simulate successful email sending
   }
+
+  async sendContactEmail(contactData) {
+    const { name, email, subject, message, category, timestamp, contactId } = contactData;
+    
+    // Get category info
+    const categoryInfo = {
+      general: { icon: '💬', label: 'General Inquiry' },
+      support: { icon: '🔧', label: 'Technical Support' },
+      feature: { icon: '💡', label: 'Feature Request' },
+      bug: { icon: '🐛', label: 'Bug Report' },
+      business: { icon: '💼', label: 'Business Inquiry' },
+      feedback: { icon: '📝', label: 'Feedback' }
+    };
+    
+    const catInfo = categoryInfo[category] || categoryInfo.general;
+    
+    console.log('\n' + '='.repeat(70));
+    console.log('📞 CONTACT FORM EMAIL SENT (Development Mode)');
+    console.log('='.repeat(70));
+    console.log(`To: Admin/Developer Email`);
+    console.log(`Subject: ${catInfo.icon} Contact Form: ${subject} - To-Do App`);
+    console.log('\n📋 Contact Information:');
+    console.log(`Name: ${name}`);
+    console.log(`Email: ${email}`);
+    console.log(`Category: ${catInfo.icon} ${catInfo.label}`);
+    console.log(`Contact ID: ${contactId}`);
+    console.log(`Timestamp: ${timestamp}`);
+    console.log(`Priority: ${category === 'support' || category === 'bug' ? 'HIGH' : 'NORMAL'}`);
+    
+    console.log('\n📝 Subject:');
+    console.log(`"${subject}"`);
+    
+    console.log('\n💬 Message:');
+    console.log(`"${message}"`);
+    
+    console.log('\n🎯 Action Required:');
+    if (category === 'support') {
+      console.log('Technical support needed - Please respond within 24 hours.');
+    } else if (category === 'bug') {
+      console.log('Bug report - Please investigate and prioritize fix.');
+    } else if (category === 'feature') {
+      console.log('Feature request - Consider for product roadmap.');
+    } else if (category === 'business') {
+      console.log('Business inquiry - Forward to appropriate team.');
+    } else {
+      console.log('Please review and respond to this contact form submission.');
+    }
+    
+    console.log('='.repeat(70) + '\n');
+    
+    return true; // Simulate successful email sending
+  }
+
+  async sendContactConfirmationEmail(contactData) {
+    const { name, email, subject, category, timestamp } = contactData;
+    
+    // Get category info
+    const categoryInfo = {
+      general: { icon: '💬', label: 'General Inquiry' },
+      support: { icon: '🔧', label: 'Technical Support' },
+      feature: { icon: '💡', label: 'Feature Request' },
+      bug: { icon: '🐛', label: 'Bug Report' },
+      business: { icon: '💼', label: 'Business Inquiry' },
+      feedback: { icon: '📝', label: 'Feedback' }
+    };
+    
+    const catInfo = categoryInfo[category] || categoryInfo.general;
+    
+    console.log('\n' + '='.repeat(60));
+    console.log('✅ CONTACT CONFIRMATION EMAIL SENT (Development Mode)');
+    console.log('='.repeat(60));
+    console.log(`To: ${email}`);
+    console.log(`Subject: ✅ We received your message - To-Do App Support`);
+    console.log('\n📝 Email Content:');
+    console.log(`Hello ${name}!`);
+    console.log(`Thank you for contacting us! We've received your message.`);
+    console.log('\n📋 Your Submission:');
+    console.log(`Category: ${catInfo.icon} ${catInfo.label}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Submitted: ${timestamp}`);
+    console.log(`Status: ✅ Received`);
+    console.log('\n⏰ Response Time: 24-48 hours');
+    console.log('='.repeat(60) + '\n');
+    
+    return true; // Simulate successful email sending
+  }
 }
 
 module.exports = new DevEmailService();

@@ -21,7 +21,12 @@ const chatbotRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip // Use user ID if authenticated, otherwise IP
+  // Let express-rate-limit handle IP addresses properly (including IPv6)
+  // No custom keyGenerator needed - it will use req.ip with proper IPv6 support
+  skip: (req) => {
+    // Skip rate limiting for authenticated users with valid sessions
+    return req.user && req.user.id && req.session && req.session.userId;
+  }
 });
 
 // Input validation middleware

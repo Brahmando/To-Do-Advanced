@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
 const sharedGroupRoutes = require('./routes/sharedGroups');
 const feedbackRoutes = require('./routes/feedback');
+const contactRoutes = require('./routes/contact');
 const chatRoutes = require('./routes/chat');
 const aiChatbotRoutes = require('./routes/aiChatbot');
 const aiChatbotAnalyticsRoutes = require('./routes/aiChatbotAnalytics');
@@ -24,12 +25,24 @@ const setupSocketServer = require('./socket');
 const io = setupSocketServer(server);
 
 const port = process.env.PORT || 5000;
-const mongoUri = process.env.MONGODB_URI || "mongodb+srv://powerangerinfinite123:n2n1RXzFsHFfzmNJ@mongocluster.pe7odxo.mongodb.net/todo_app?retryWrites=true&w=majority&appName=MongoCluster";
+const mongoUri = process.env.MONGODB_URI;
+
+// Validate required environment variables
+if (!mongoUri) {
+  console.error('❌ MONGODB_URI environment variable is required');
+  process.exit(1);
+}
 
 // Middleware
 app.use(express.json());
+
+// Configure CORS origins from environment variables
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : ["http://localhost:3000", "http://localhost:5173"]; // fallback for development
+
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173"],
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -39,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/shared-groups', sharedGroupRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai-chatbot', aiChatbotRoutes);
 app.use('/api/ai-chatbot', aiChatbotAnalyticsRoutes);

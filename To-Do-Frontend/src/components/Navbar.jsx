@@ -100,6 +100,18 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
+              <Link
+                to="/about"
+                className="text-white hover:text-gray-200 px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 whitespace-nowrap hover:bg-white/10"
+              >
+                <span className="hidden xl:inline">ℹ️ </span>About
+              </Link>
+              <Link
+                to="/contact"
+                className="text-white hover:text-gray-200 px-2 md:px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg transition-all duration-200 text-xs lg:text-sm font-medium transform hover:scale-105 whitespace-nowrap hover:bg-white/10"
+              >
+                <span className="hidden xl:inline">🛠️ </span>Support
+              </Link>
               {user && (
                 <Link
                   to="/my-tasks"
@@ -295,6 +307,25 @@ const Navbar = ({ user, onLoginClick, onSignupClick, onLogout, onGroupTaskClick,
 
             {/* Menu Content */}
             <div className="p-6 space-y-4 overflow-y-auto h-full pb-32">
+              {/* Common Links - Always visible */}
+              <Link
+                to="/about"
+                className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 w-full text-left transform hover:scale-105"
+                onClick={closeMobileMenu}
+              >
+                <span className="text-xl">ℹ️</span>
+                <span className="font-medium">About</span>
+              </Link>
+              
+              <Link
+                to="/contact"
+                className="flex items-center space-x-3 text-white hover:bg-white/10 p-3 rounded-lg transition-all duration-200 w-full text-left transform hover:scale-105"
+                onClick={closeMobileMenu}
+              >
+                <span className="text-xl">🛠️</span>
+                <span className="font-medium">Support</span>
+              </Link>
+
               {user && (
                 <>
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6">

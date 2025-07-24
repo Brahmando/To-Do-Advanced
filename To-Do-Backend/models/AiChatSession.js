@@ -46,9 +46,8 @@ const aiChatSessionSchema = new mongoose.Schema({
   }
 });
 
-// Index for efficient querying
-aiChatSessionSchema.index({ userId: 1, lastActivity: -1 });
-aiChatSessionSchema.index({ userId: 1, isActive: 1 });
+// Index for efficient querying - optimized to avoid duplicate userId indexes
+aiChatSessionSchema.index({ userId: 1, isActive: 1, lastActivity: -1 });
 
 // Update lastActivity on message addition
 aiChatSessionSchema.pre('save', function(next) {
