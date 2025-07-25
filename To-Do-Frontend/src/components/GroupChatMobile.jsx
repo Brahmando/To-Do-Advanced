@@ -9,7 +9,7 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
-  const [_onlineMembers, setOnlineMembers] = useState([]);
+  const [onlineMembers, setOnlineMembers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -21,6 +21,7 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const socketRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const messageRefs = useRef({});
   const messagesContainerRef = useRef(null);
 
@@ -639,5 +640,3 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
 };
 
 export default GroupChat;
-        
-       

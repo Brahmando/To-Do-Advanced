@@ -254,6 +254,33 @@ router.get('/help', aiChatbotAuth, cacheMiddleware(600), async (req, res) => {
 });
 
 /**
+ * POST /api/ai-chatbot/refresh-cache
+ * Clear user data cache to ensure fresh data for AI responses
+ */
+router.post('/refresh-cache', aiChatbotAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Import cache service functions
+    const { clearUserCache } = require('../services/cacheService');
+    
+    // Clear the user's cached data
+    clearUserCache(userId);
+    
+    res.json({
+      success: true,
+      message: 'User data cache refreshed successfully'
+    });
+  } catch (error) {
+    console.error('AI Chatbot refresh cache error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error while refreshing cache'
+    });
+  }
+});
+
+/**
  * GET /api/ai-chatbot/performance
  * Get performance metrics and cache statistics (admin/debug endpoint)
  */

@@ -203,6 +203,13 @@ function invalidateUserCache(userId) {
 }
 
 /**
+ * Clear all cache entries for a specific user
+ */
+function clearUserCache(userId) {
+  return cacheService.invalidatePattern(`^user:${userId}:`);
+}
+
+/**
  * Invalidate specific data type cache for user
  */
 function invalidateUserDataCache(userId, dataType) {
@@ -308,6 +315,7 @@ module.exports = {
   generateSessionCacheKey,
   cacheUserData,
   getCachedUserData,
+  clearUserCache,
   invalidateUserCache,
   invalidateUserDataCache,
   cacheMiddleware,

@@ -40,6 +40,16 @@ exports.createTask = async (req, res) => {
       });
     }
 
+    // Clear AI chatbot cache for this user so they get updated data
+    if (req.user && req.user.userId) {
+      try {
+        const { clearUserCache } = require('../services/cacheService');
+        clearUserCache(req.user.userId);
+      } catch (cacheError) {
+        console.warn('Failed to clear user cache after task creation:', cacheError);
+      }
+    }
+
     res.status(201).json(savedTask);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -70,6 +80,14 @@ exports.completeTask = async (req, res) => {
         $pull: { activeTasks: id },
         $push: { completedTasks: id }
       });
+
+      // Clear AI chatbot cache for updated data
+      try {
+        const { clearUserCache } = require('../services/cacheService');
+        clearUserCache(req.user.userId);
+      } catch (cacheError) {
+        console.warn('Failed to clear user cache after task completion:', cacheError);
+      }
     }
 
     res.json(task);

@@ -26,6 +26,7 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
     if (isOpen) {
       loadChatHistory();
       loadQuickSuggestions();
+      refreshUserData(); // Refresh data cache when chat opens
       // Focus input when chat opens
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -36,7 +37,7 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
     const suggestions = [
       "How many tasks do I have?",
       "Show me my groups",
-      "Any notifications?",
+      "Any notifications?", 
       "Productivity insights",
       "Account overview",
       "Help me"
@@ -68,6 +69,28 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
       console.error('Error loading chat history:', error);
     } finally {
       setIsLoadingHistory(false);
+    }
+  };
+
+  // Refresh user data cache to ensure AI gets latest information
+  const refreshUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/ai-chatbot/refresh-cache`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        console.log('User data cache refreshed successfully');
+      } else {
+        console.warn('Failed to refresh user data cache');
+      }
+    } catch (error) {
+      console.warn('Error refreshing user data cache:', error);
     }
   };
 
@@ -246,6 +269,13 @@ Just ask me anything in natural language! Try "How many tasks do I have?" or "Sh
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <button
+              onClick={refreshUserData}
+              className="px-3 py-1 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+              title="Refresh data for updated results"
+            >
+              🔄 Refresh
+            </button>
             <button
               onClick={exportChat}
               className="px-3 py-1 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"

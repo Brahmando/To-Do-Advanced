@@ -25,6 +25,7 @@ import FeedbackPage from './components/FeedbackPage';
 import AboutPage from './components/AboutPage';
 import ContactPage from './components/ContactPage';
 import TaskBuddyChat from './components/TaskBuddyChat';
+import './styles/mobile.css'; // Import mobile responsiveness styles
 
 // Google OAuth Client ID (you'll need to get this from Google Console)
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id.apps.googleusercontent.com";

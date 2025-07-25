@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: ['7b4d9b7a-2b69-418f-9a38-967642d11a06-00-jfikp0pli8zu.sisko.replit.dev'],
+    historyApiFallback: true, // Enable SPA routing support
     proxy: {
       '/api': {
         target: 'https://to-do-advanced-production.up.railway.app',
@@ -13,5 +14,16 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
+  preview: {
+    port: 4173,
+    host: true
   }
 })
