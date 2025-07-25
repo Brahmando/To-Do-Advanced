@@ -82,6 +82,7 @@ function App() {
   const [showGroupTaskModal, setShowGroupTaskModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   // Check for saved user on component mount
   useEffect(() => {
@@ -100,6 +101,9 @@ function App() {
       setIsGuestMode(true);
       loadGuestTasks();
     }
+    
+    // Set loading to false after checking localStorage
+    setIsLoading(false);
   }, []);
 
   // Fetch notifications periodically for logged-in users
@@ -664,10 +668,26 @@ function App() {
               />
             } />
             <Route path="/shared-groups" element={
-              user ? <SharedGroupsPage user={user} /> : <Navigate to="/" />
+              isLoading ? (
+                <div className="flex justify-center items-center min-h-screen">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : user ? (
+                <SharedGroupsPage user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
             } />
             <Route path="/shared-group/:id" element={
-              user ? <SharedGroupDetail user={user} /> : <Navigate to="/" />
+              isLoading ? (
+                <div className="flex justify-center items-center min-h-screen">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : user ? (
+                <SharedGroupDetail user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
             } />
             <Route path="/feedback" element={
               <FeedbackPage user={user} />
