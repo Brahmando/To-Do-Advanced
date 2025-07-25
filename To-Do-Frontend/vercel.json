@@ -13,7 +13,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/shared-group/:id",
+      "source": "/shared-group/(.*)",
       "destination": "/index.html"
     },
     {
@@ -26,6 +26,10 @@
     },
     {
       "source": "/contact",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!api|_next|_static|favicon.ico|.*\\.).*)$",
       "destination": "/index.html"
     }
   ],
