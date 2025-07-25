@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-const GroupChat = ({ groupId, user, groupMembers }) => {
+const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
   // State management
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -110,10 +110,13 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
           return prev;
         });
 
-        // Clear typing indicator after 3 seconds
-        setTimeout(() => {
+        // Clear typing indicator after 3 seconds with cleanup
+        const timeout = setTimeout(() => {
           setTypingUsers(prev => prev.filter(name => name !== data.userName));
         }, 3000);
+
+        // Store timeout for cleanup
+        return () => clearTimeout(timeout);
       }
     });
 
@@ -206,18 +209,31 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
 
   // Format timestamp
   const formatTime = useCallback((timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = (now - date) / (1000 * 60);
-    const diffInHours = diffInMinutes / 60;
-    const diffInDays = diffInHours / 24;
-
-    if (diffInMinutes < 1) return 'now';
-    if (diffInMinutes < 60) return `${Math.floor(diffInMinutes)}m`;
-    if (diffInHours < 24) return `${Math.floor(diffInHours)}h`;
-    if (diffInDays < 7) return `${Math.floor(diffInDays)}d`;
+    if (!timestamp) return 'now';
     
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    try {
+      const date = new Date(timestamp);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'now';
+      }
+      
+      const now = new Date();
+      const diffInMinutes = (now - date) / (1000 * 60);
+      const diffInHours = diffInMinutes / 60;
+      const diffInDays = diffInHours / 24;
+
+      if (diffInMinutes < 1) return 'now';
+      if (diffInMinutes < 60) return `${Math.floor(diffInMinutes)}m`;
+      if (diffInHours < 24) return `${Math.floor(diffInHours)}h`;
+      if (diffInDays < 7) return `${Math.floor(diffInDays)}d`;
+      
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    } catch (error) {
+      console.warn('Error formatting timestamp:', timestamp, error);
+      return 'now';
+    }
   }, []);
 
   // Toggle chat
@@ -351,7 +367,7 @@ const GroupChat = ({ groupId, user, groupMembers }) => {
   );
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 left-4 z-50">
       {/* Chat Window */}
       {isOpen && (
         <div className={`mb-4 bg-white rounded-2xl shadow-2xl border border-gray-200 transition-all duration-300 transform ${
