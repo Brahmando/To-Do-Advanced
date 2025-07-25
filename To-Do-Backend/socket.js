@@ -117,6 +117,7 @@ function setupSocketServer(server) {
     // Typing indicator
     socket.on('typing', (groupId) => {
       socket.to(`group:${groupId}`).emit('user-typing', {
+        groupId,
         userId: socket.userId,
         userName: socket.userName
       });

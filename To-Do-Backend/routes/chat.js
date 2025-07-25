@@ -38,6 +38,41 @@ router.get('/group/:groupId', auth, async (req, res) => {
   }
 });
 
+// Alias route for backward compatibility
+router.get('/messages/:groupId', auth, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { page = 1, limit = 50 } = req.query;
+
+    const messages = await ChatMessage.find({ groupId })
+      .populate('sender', 'name')
+      .populate('replyTo', 'message sender')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    // Reverse to get chronological order (oldest first)
+    const chronologicalMessages = messages.reverse();
+
+    res.json({
+      success: true,
+      messages: chronologicalMessages,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: await ChatMessage.countDocuments({ groupId })
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch messages' 
+    });
+  }
+});
+
 // Send a message (this will be handled by Socket.IO, but keeping for backup)
 router.post('/group/:groupId/message', auth, async (req, res) => {
   try {

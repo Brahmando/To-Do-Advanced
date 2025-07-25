@@ -50,6 +50,11 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
       console.log('Socket connected successfully');
       setConnectionStatus('connected');
       socket.emit('join-group', groupId);
+      
+      // Fetch messages once connected and joined
+      setTimeout(() => {
+        if (isOpen) fetchMessages();
+      }, 500);
     });
 
     socket.on('connect_error', (err) => {
@@ -120,6 +125,12 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
       }
     });
 
+    // Handle socket errors
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      setConnectionStatus('error');
+    });
+
     socketRef.current = socket;
 
     return () => {
@@ -135,7 +146,7 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://to-do-advanced-production.up.railway.app/api/chat/messages/${groupId}`, {
+      const response = await fetch(`https://to-do-advanced-production.up.railway.app/api/chat/group/${groupId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -184,6 +195,7 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
       _id: `temp-${Date.now()}`,
       message: messageText,
       sender: { _id: user.id, name: user.name },
+      createdAt: new Date().toISOString(),
       timestamp: new Date().toISOString(),
       replyTo: replyingTo,
       isTemp: true
@@ -212,7 +224,9 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
     if (!timestamp) return 'now';
     
     try {
-      const date = new Date(timestamp);
+      // Handle both MongoDB createdAt and custom timestamp fields
+      const timeValue = timestamp.createdAt || timestamp.timestamp || timestamp;
+      const date = new Date(timeValue);
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
@@ -245,8 +259,11 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
     } else {
       setIsOpen(true);
       setUnreadCount(0);
-      fetchMessages();
-      setTimeout(() => chatInputRef.current?.focus(), 100);
+      // Always fetch messages when opening chat
+      setTimeout(() => {
+        fetchMessages();
+        chatInputRef.current?.focus();
+      }, 100);
     }
   }, [isOpen, fetchMessages]);
 
@@ -333,7 +350,7 @@ const GroupChat = ({ groupId, user, groupMembers: _groupMembers }) => {
           <div className={`text-xs mt-1 ${
             isOwn ? 'text-blue-100' : 'text-gray-500'
           } flex items-center justify-between`}>
-            <span>{formatTime(message.timestamp)}</span>
+            <span>{formatTime(message)}</span>
             {message.isTemp && (
               <svg className="w-3 h-3 animate-spin ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
