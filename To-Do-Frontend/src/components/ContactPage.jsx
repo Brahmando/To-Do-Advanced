@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../config/api';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -51,7 +52,7 @@ const ContactPage = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/contact`, {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

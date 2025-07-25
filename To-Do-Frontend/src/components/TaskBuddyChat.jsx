@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../config/api';
 
 const TaskBuddyChat = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -48,7 +49,7 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
     setIsLoadingHistory(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai-chatbot/history', {
+      const response = await fetch(`${API_BASE_URL}/ai-chatbot/history`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -88,7 +89,7 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai-chatbot/chat', {
+      const response = await fetch(`${API_BASE_URL}/ai-chatbot/chat`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -183,7 +184,7 @@ const TaskBuddyChat = ({ isOpen, onClose }) => {
   const clearHistory = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai-chatbot/history', {
+      const response = await fetch(`${API_BASE_URL}/ai-chatbot/history`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
