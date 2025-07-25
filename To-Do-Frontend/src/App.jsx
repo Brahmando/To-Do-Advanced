@@ -674,8 +674,6 @@ function App() {
             } />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            {/* Catch-all route - redirect unmatched routes to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
 
           <LoginModal
