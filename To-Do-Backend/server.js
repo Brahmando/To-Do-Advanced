@@ -104,8 +104,22 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/ai-chatbot', aiChatbotRoutes);
 app.use('/api/ai-chatbot', aiChatbotAnalyticsRoutes);
 
-// MongoDB Connection
-mongoose.connect(mongoUri)
+// MongoDB Connection with enhanced options
+const mongooseOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // Increase timeout for server selection
+  heartbeatFrequencyMS: 10000, // Check server status more frequently
+  socketTimeoutMS: 45000, // Increase socket timeout
+  family: 4, // Use IPv4, skip trying IPv6
+  retryWrites: true,
+  // Setting w: 'majority' ensures better durability but might affect performance slightly
+  w: 'majority',
+  maxPoolSize: 100 // Increase connection pool for better handling of many concurrent users
+};
+
+console.log('📊 Connecting to MongoDB...');
+mongoose.connect(mongoUri, mongooseOptions)
   .then(() => {
     console.log('🚀 To-Do App (Beta) - MongoDB connected successfully');
     // Start the server with Socket.IO support
@@ -118,6 +132,11 @@ mongoose.connect(mongoUri)
   })
   .catch(err => {
     console.error('❌ MongoDB connection error:', err);
+    console.error('Connection Details:');
+    console.error('- MongoDB URI pattern correct? (mongodb+srv://username:password@cluster.mongodb.net/database)');
+    console.error('- IP Access: Make sure your MongoDB Atlas cluster allows access from anywhere (0.0.0.0/0)');
+    console.error('- Credentials correct? Check username and password in your connection string');
+    console.error('- Network: Check if your hosting provider (Railway) requires special configurations');
   });
 
 // Basic route for testing
