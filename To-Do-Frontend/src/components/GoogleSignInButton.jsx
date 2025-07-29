@@ -11,7 +11,10 @@ const GoogleSignInButton = ({ onSuccess, onError, text = "Sign in with Google" }
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Origin': window.location.origin,
         },
+        credentials: 'include', // Send cookies with the request
+        mode: 'cors', // Explicitly state that this is a CORS request
         body: JSON.stringify({
           credential: credentialResponse.credential
         }),
@@ -29,7 +32,21 @@ const GoogleSignInButton = ({ onSuccess, onError, text = "Sign in with Google" }
       }
     } catch (error) {
       console.error('Google sign-in error:', error);
-      onError('Network error during Google sign-in');
+      
+      // Specific error handling for CORS issues
+      if (error.message && error.message.includes('NetworkError')) {
+        onError('CORS error: Unable to connect to authentication server. Please contact support.');
+        console.error('CORS Error Details:', { 
+          origin: window.location.origin,
+          target: 'https://to-do-advanced-production.up.railway.app/api/auth/google-signin'
+        });
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        onError('Network error: Server may be down or CORS issue. Please try again later.');
+      } else {
+        onError('Network error during Google sign-in');
+      }
+      
+      setHasError(true);
     }
   };
 
