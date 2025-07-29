@@ -105,9 +105,8 @@ app.use('/api/ai-chatbot', aiChatbotRoutes);
 app.use('/api/ai-chatbot', aiChatbotAnalyticsRoutes);
 
 // MongoDB Connection with enhanced options
+// Note: Removing deprecated options (useNewUrlParser, useUnifiedTopology)
 const mongooseOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000, // Increase timeout for server selection
   heartbeatFrequencyMS: 10000, // Check server status more frequently
   socketTimeoutMS: 45000, // Increase socket timeout
@@ -119,25 +118,66 @@ const mongooseOptions = {
 };
 
 console.log('📊 Connecting to MongoDB...');
-mongoose.connect(mongoUri, mongooseOptions)
-  .then(() => {
-    console.log('🚀 To-Do App (Beta) - MongoDB connected successfully');
-    // Start the server with Socket.IO support
-    server.listen(port, () => {
-      console.log(`🌟 To-Do App Beta Server running on port ${port} - http://localhost:${port}`);
-      console.log('💬 Socket.IO chat server enabled');
-      console.log('📧 Email service configured for OTP verification');
-      console.log('⚠️  Beta version - Please report any issues!');
-    });
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-    console.error('Connection Details:');
-    console.error('- MongoDB URI pattern correct? (mongodb+srv://username:password@cluster.mongodb.net/database)');
-    console.error('- IP Access: Make sure your MongoDB Atlas cluster allows access from anywhere (0.0.0.0/0)');
-    console.error('- Credentials correct? Check username and password in your connection string');
-    console.error('- Network: Check if your hosting provider (Railway) requires special configurations');
+console.log(`Connection string format: ${mongoUri.replace(/\/\/.*?@/, '//[CREDENTIALS_HIDDEN]@')}`); // Hide credentials but show the format
+
+// Function to start server after successful MongoDB connection
+const startServer = () => {
+  server.listen(port, () => {
+    console.log(`🌟 To-Do App Beta Server running on port ${port} - http://localhost:${port}`);
+    console.log('💬 Socket.IO chat server enabled');
+    console.log('📧 Email service configured for OTP verification');
+    console.log('⚠️  Beta version - Please report any issues!');
   });
+};
+
+// Try to connect to MongoDB with retries
+let retryCount = 0;
+const maxRetries = 5;
+
+const connectWithRetry = () => {
+  console.log(`MongoDB connection attempt ${retryCount + 1}/${maxRetries}...`);
+  
+  mongoose.connect(mongoUri, mongooseOptions)
+    .then(() => {
+      console.log('🚀 To-Do App (Beta) - MongoDB connected successfully');
+      startServer();
+    })
+    .catch(err => {
+      console.error('❌ MongoDB connection error:', err.message);
+      
+      // Check specific error types
+      const errorMessage = err.message || '';
+      
+      if (errorMessage.includes('authentication failed')) {
+        console.error('⛔ Authentication Error: Check your username and password in the MongoDB connection string');
+      } else if (errorMessage.includes('whitelist')) {
+        console.error('⛔ IP Whitelist Error: Your current IP is not in the MongoDB Atlas IP access list');
+        console.error('👉 Go to MongoDB Atlas Dashboard → Network Access → Add IP Address → Allow Access From Anywhere');
+        console.error('👉 Make sure to UNCHECK the "Temporary" option to make the setting permanent');
+      } else {
+        console.error('Connection Details:');
+        console.error('- MongoDB URI pattern correct? (mongodb+srv://username:password@cluster.mongodb.net/database)');
+        console.error('- IP Access: Make sure your MongoDB Atlas cluster allows access from anywhere (0.0.0.0/0)');
+        console.error('- Credentials correct? Check username and password in your connection string');
+        console.error('- Network: Check if your hosting provider (Railway) requires special configurations');
+      }
+      
+      // Try to connect again with exponential backoff
+      if (retryCount < maxRetries) {
+        const retryDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+        retryCount++;
+        console.log(`Retrying connection in ${retryDelay / 1000} seconds...`);
+        setTimeout(connectWithRetry, retryDelay);
+      } else {
+        console.error('❌ Failed to connect to MongoDB after multiple attempts. Server will start anyway, but functionality will be limited.');
+        // Start server anyway so the application doesn't completely fail
+        startServer();
+      }
+    });
+};
+
+// Start connection process
+connectWithRetry();
 
 // Basic route for testing
 app.get('/', (req, res) => {
