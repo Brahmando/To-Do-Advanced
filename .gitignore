@@ -9,3 +9,7 @@ attached_assets
 .DS_Store   
 .kiro
 dist
+# Ignore all .md files except README.md
+*.md
+!README.md
+!To-Do-Frontend/README.md
